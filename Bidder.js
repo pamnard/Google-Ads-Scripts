@@ -1,7 +1,7 @@
 function main() {
 
-    var ARPU = 13; // APRU на пользователя без партнёра
-    var AverageCheck = 150; // Средний чек на пользователя без партнёра
+    var ARPU = 13; // APRU на пользователя
+    var AverageCheck = 150; // Средний чек на пользователя
     
     var minPosition = 1.5; // Минимально удерживаемая позиция
 

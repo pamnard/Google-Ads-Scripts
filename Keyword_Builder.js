@@ -17,14 +17,14 @@ function main() {
     var customDateRangeShift = 0;
 
     // -----------------------------------
-    
+
     ensureAccountLabels(); // Проверяем и создаем ярлыки
     adGroupReport(); // Создаем ключи
 
     function adGroupReport() {
         var adGroupPerfomanceAWQL = 'SELECT CampaignName, CampaignId, AdGroupName, AdGroupId ' +
             'FROM ADGROUP_PERFORMANCE_REPORT ' +
-            'WHERE CampaignStatus = ENABLED AND AdGroupStatus = ENABLED AND CampaignName DOES_NOT_CONTAIN_IGNORE_CASE DSA AND CampaignName DOES_NOT_CONTAIN "[" ' +
+            'WHERE CampaignStatus = ENABLED AND AdGroupStatus = ENABLED ' + // AND CampaignName DOES_NOT_CONTAIN_IGNORE_CASE DSA AND CampaignName DOES_NOT_CONTAIN "["
             'DURING ' + customDateRange();
 
         var adGroupPerfomanceRowsIter = AdWordsApp.report(adGroupPerfomanceAWQL, REPORTING_OPTIONS).rows();
@@ -38,7 +38,7 @@ function main() {
 
             if (keywordRow != undefined) {
                 Logger.log('Campaign: ' + keywordCampaignName + ', Ad Group: ' + keywordAdGroupName);
-                buildNewKeywords();       
+                buildNewKeywords();
                 Logger.log('-----------------------------------------------------------------------------------------');
             }
         }
@@ -143,7 +143,7 @@ function main() {
                     var newKeyword = '+' + Query.replace(/ /ig, ' +');
                     var newKeywordPhrase = '"' + Query + '"';
                     var newKeywordExact = '[' + Query + ']';
-                    
+
                     // Ниже можно изменить параметры добавления новых фраз
 
                     if (Impressions >= 2) {
@@ -230,6 +230,7 @@ function main() {
             function checkNegativeKeywords(keywordForCheck) {
                 function checkingNegativeKeywords() {
                     var result = true;
+
                     function checkResult(check) {
                         if (check != true) {
                             result = false;
@@ -302,7 +303,7 @@ function main() {
             }
         }
     }
-    
+
     function ensureAccountLabels() {
         function getAccountLabelNames() {
             var labelNames = [];

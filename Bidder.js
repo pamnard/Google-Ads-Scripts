@@ -1,8 +1,7 @@
 function main() {
 
-    var ARPU = 13; // APRU на пользователя
-    var AverageCheck = 150; // Средний чек на пользователя
-    
+    var ARPU = 13; // APRU
+    var AverageCheck = 150; // Средний чек
     var minPosition = 1.5; // Минимально удерживаемая позиция
 
     var adGroupPerfomanceAWQL = 'SELECT CampaignName, CampaignId, AdGroupName, AdGroupId ' +
@@ -61,6 +60,7 @@ function main() {
                     .withCondition('AdGroupId = ' + keywordAdGroupId)
                     .withCondition('AveragePosition > ' + minPosition)
                     .withCondition('Impressions > ' + nowDateFormatted)
+                    .forDateRange('TODAY')
                     .get();
                 if (keywordIterator.hasNext()) {
                     while (keywordIterator.hasNext()) {

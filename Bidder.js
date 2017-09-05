@@ -1,7 +1,6 @@
 function main() {
 
     var ARPU = 13; // APRU
-    var AverageCheck = 150; // Средний чек
     var minPosition = 1.5; // Минимально удерживаемая позиция
 
     var adGroupPerfomanceAWQL = 'SELECT CampaignName, CampaignId, AdGroupName, AdGroupId ' +

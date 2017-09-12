@@ -9,7 +9,7 @@ function main() {
     var scriptLabel = 'Keyword Builder';
 
     // Указываем количество дней для выборки
-    // Если хотим использовать данные о конверсиях или доходности, то в качестве значения следует указывать число большее чем окно конверсии. 
+    // Если хотим использовать данные о конверсиях или доходности, то в качестве значения следует указывать число больее чем окно конверсии. 
     var customDaysInDateRange = 30;
 
     // Указываем на сколько дней от сегодняшнего мы сдвигаем выборку. Нужно для того чтобы не брать те дни когда запаздывает статистика.
@@ -19,25 +19,36 @@ function main() {
     // -----------------------------------
 
     ensureAccountLabels(); // Проверяем и создаем ярлыки
-    adGroupReport(); // Создаем ключи
+
+    var campaignPerfomaceAWQL = 'SELECT CampaignName, CampaignId ' +
+        'FROM CAMPAIGN_PERFORMANCE_REPORT ' +
+        'WHERE CampaignStatus = ENABLED AND AdvertisingChannelType = SEARCH ' + // AND CampaignName DOES_NOT_CONTAIN_IGNORE_CASE DSA AND CampaignName DOES_NOT_CONTAIN "["
+        'DURING TODAY';
+    var campaignPerfomaceRowsIter = AdWordsApp.report(campaignPerfomaceAWQL, REPORTING_OPTIONS).rows();
+    while (campaignPerfomaceRowsIter.hasNext()) {
+        var CampaignRow = campaignPerfomaceRowsIter.next();
+        var CampaignName = CampaignRow['CampaignName'];
+        var CampaignId = CampaignRow['CampaignId'];
+        if (CampaignRow) {
+            adGroupReport(); // Создаем ключи
+        }
+    }
 
     function adGroupReport() {
-        var adGroupPerfomanceAWQL = 'SELECT CampaignName, CampaignId, AdGroupName, AdGroupId ' +
+        var adGroupPerfomanceAWQL = 'SELECT AdGroupName, AdGroupId ' +
             'FROM ADGROUP_PERFORMANCE_REPORT ' +
-            'WHERE CampaignStatus = ENABLED AND AdGroupStatus = ENABLED ' + // AND CampaignName DOES_NOT_CONTAIN_IGNORE_CASE DSA AND CampaignName DOES_NOT_CONTAIN "["
-            'DURING ' + customDateRange();
+            'WHERE CampaignId = ' + CampaignId + ' AND AdGroupStatus = ENABLED ' +
+            'DURING TODAY';
 
         var adGroupPerfomanceRowsIter = AdWordsApp.report(adGroupPerfomanceAWQL, REPORTING_OPTIONS).rows();
 
         while (adGroupPerfomanceRowsIter.hasNext()) {
-            var keywordRow = adGroupPerfomanceRowsIter.next();
-            var keywordCampaignName = keywordRow['CampaignName'];
-            var keywordCampaignId = keywordRow['CampaignId'];
-            var keywordAdGroupName = keywordRow['AdGroupName'];
-            var keywordAdGroupId = keywordRow['AdGroupId'];
+            var adGroupRow = adGroupPerfomanceRowsIter.next();
+            var AdGroupName = adGroupRow['AdGroupName'];
+            var AdGroupId = adGroupRow['AdGroupId'];
 
-            if (keywordRow != undefined) {
-                Logger.log('Campaign: ' + keywordCampaignName + ', Ad Group: ' + keywordAdGroupName);
+            if (adGroupRow != undefined) {
+                Logger.log('Campaign: ' + CampaignName + ', Ad Group: ' + AdGroupName);
                 buildNewKeywords();
                 Logger.log('-----------------------------------------------------------------------------------------');
             }
@@ -47,8 +58,8 @@ function main() {
             var allNegativeKeywordsList = getNegativeKeywordForAdGroup();
             var allalredyAddedKeywords = alredyAddedKeywords();
             var keywordsToAdd = checkSearchQweries();
+
             var cleanKeywords = [];
-            var resultList = [];
 
             keywordsToAdd.forEach(
                 function (keyword) {
@@ -59,6 +70,9 @@ function main() {
                     }
                 }
             );
+
+            var resultList = [];
+
             cleanKeywords.forEach(
                 function (keyword) {
                     if (checkNegativeKeywords(keyword) != false) {
@@ -77,9 +91,8 @@ function main() {
                 newKeywordsArray.forEach(
                     function (newKeyword) {
                         var adGroupIterator = AdWordsApp.adGroups()
-                            .withCondition('CampaignId = ' + keywordCampaignId)
-                            .withCondition('AdGroupId = ' + keywordAdGroupId)
-                            .withLimit(1)
+                            .withCondition('CampaignId = ' + CampaignId)
+                            .withCondition('AdGroupId = ' + AdGroupId)
                             .get();
                         while (adGroupIterator.hasNext()) {
                             var adGroup = adGroupIterator.next();
@@ -104,8 +117,8 @@ function main() {
             function alredyAddedKeywords() {
                 var report = [];
                 var keywordIterator = AdWordsApp.keywords()
-                    .withCondition('CampaignId = ' + keywordCampaignId)
-                    .withCondition('AdGroupId = ' + keywordAdGroupId)
+                    .withCondition('CampaignId = ' + CampaignId)
+                    .withCondition('AdGroupId = ' + AdGroupId)
                     .withCondition('Status != REMOVED')
                     .withCondition('IsNegative = FALSE')
                     .withLimit(20000)
@@ -117,28 +130,23 @@ function main() {
                         report[report.length] = keyword.toString();
                     }
                 }
-                report = unique(report).sort();
+                report = report.sort();
                 return report;
             }
 
             function checkSearchQweries() {
                 var report = [];
-                var searchQweryPerfomanceAWQL = 'SELECT CampaignName, CampaignId, AdGroupName, AdGroupId, Query, Impressions ' +
+                var searchQweryPerfomanceAWQL = 'SELECT Query, Impressions ' +
                     'FROM SEARCH_QUERY_PERFORMANCE_REPORT ' +
-                    'WHERE CampaignId = ' + keywordCampaignId + ' AND AdGroupId = ' + keywordAdGroupId + ' ' +
+                    'WHERE CampaignId = ' + CampaignId + ' AND AdGroupId = ' + AdGroupId + ' ' +
                     'AND Impressions >= 2 ' + // <-------------------------------------- Здесь можно отредактировать условия выборки
-                    'AND QueryMatchTypeWithVariant NOT_IN [AUTO, BROAD, EXPANDED] ' +
                     'DURING ' + customDateRange();
                 var searchQweryPerfomanceRowsIter = AdWordsApp.report(searchQweryPerfomanceAWQL, REPORTING_OPTIONS).rows();
 
                 while (searchQweryPerfomanceRowsIter.hasNext()) {
                     var row = searchQweryPerfomanceRowsIter.next();
-                    var CampaignName = row['CampaignName'];
-                    var CampaignId = row['CampaignId'];
-                    var AdGroupName = row['AdGroupName'];
-                    var AdGroupId = row['AdGroupId'];
                     var Query = row['Query'].toString().toLowerCase();
-                    var Impressions = row['Impressions'];
+                    var Impressions = parseFloat(row['Impressions']);
 
                     var newKeyword = '+' + Query.replace(/ /ig, ' +');
                     var newKeywordPhrase = '"' + Query + '"';
@@ -163,8 +171,7 @@ function main() {
             function getNegativeKeywordForAdGroup() {
                 var fullNegativeKeywordsList = [];
                 var campaignIterator = AdWordsApp.campaigns()
-                    .withCondition('CampaignId = ' + keywordCampaignId)
-                    .withLimit(1)
+                    .withCondition('CampaignId = ' + CampaignId)
                     .get();
                 if (campaignIterator.hasNext()) {
                     var campaign = campaignIterator.next();
@@ -190,9 +197,8 @@ function main() {
                         fullNegativeKeywordsList[fullNegativeKeywordsList.length] = campaignNegativeKeyword.getText();
                     }
                     var adGroupIterator = AdWordsApp.adGroups() // Получаем минус-слова из группы
-                        .withCondition('CampaignId = ' + keywordCampaignId)
-                        .withCondition('AdGroupId = ' + keywordAdGroupId)
-                        .withLimit(1)
+                        .withCondition('CampaignId = ' + CampaignId)
+                        .withCondition('AdGroupId = ' + AdGroupId)
                         .get();
                     if (adGroupIterator.hasNext()) {
                         var adGroup = adGroupIterator.next();
@@ -238,17 +244,18 @@ function main() {
                     }
                     allNegativeKeywordsList.forEach(
                         function (negativeKeyword) {
-                            var clearedNegativeKeyword = negativeKeyword.toString().toLowerCase().replace(/\+/g, '').replace(/\"/g, '');
+                            var negativeWord = negativeKeyword.toString().toLowerCase();
+                            var clearedNegativeKeyword = negativeWord.replace(/\+/g, '').replace(/\"/g, '');
                             if ((keywordForCheck.indexOf('[') != -1) || (keywordForCheck.indexOf('"') != -1)) { // минус-фраза с точным или фразовым соответствием
-                                if (negativeKeyword == keywordForCheck) {
+                                if (negativeWord == keywordForCheck) {
                                     checkResult(false);
-                                    // Logger.log('(1) Фраза: ' + keywordForCheck + ' Минус-фраза: ' + negativeKeyword);
-                                } else if (negativeKeyword.toString().indexOf('[') == -1) {
+                                    // Logger.log('(1) Фраза: ' + keywordForCheck + ' Минус-фраза: ' + negativeWord);
+                                } else if (negativeWord.indexOf('[') == -1) {
                                     if (clearedNegativeKeyword.indexOf(' ') != -1) {
                                         if (keywordForCheck.indexOf(clearedNegativeKeyword) != -1) {
                                             // очищеная минус-фраза есть в ключевой фразе, но минус-фраза не в точном и не в широком соответствии
                                             checkResult(false);
-                                            // Logger.log('(2) Фраза: ' + keywordForCheck + ' Минус-фраза: ' + negativeKeyword);
+                                            // Logger.log('(2) Фраза: ' + keywordForCheck + ' Минус-фраза: ' + negativeWord);
                                         }
                                     } else {
                                         var words = [];
@@ -256,18 +263,18 @@ function main() {
                                         // Logger.log(words);
                                         words.forEach(
                                             function (word) {
-                                                if (negativeKeyword == word) { // проверяем совпадение минус-фразы(слова), со словами в ключевой фразе
+                                                if (negativeWord == word) { // проверяем совпадение минус-фразы(слова), со словами в ключевой фразе
                                                     checkResult(false);
-                                                    // Logger.log('(3) Фраза: ' + keywordForCheck + ' Минус-фраза: ' + negativeKeyword);
+                                                    // Logger.log('(3) Фраза: ' + keywordForCheck + ' Минус-фраза: ' + negativeWord);
                                                 }
                                             }
                                         );
                                     }
                                 }
                             } else { // минус-фраза с широким соответствием
-                                if (negativeKeyword.toString().indexOf(' ') != -1) {
+                                if (negativeWord.indexOf(' ') != -1) {
                                     var negativeWords = [];
-                                    negativeWords = negativeKeyword.toLowerCase().replace(/\+/g, '').replace(/\"/g, '').replace(/\[/g, '').replace(/\]/g, '').split(' ');
+                                    negativeWords = negativeWord.replace(/\+/g, '').replace(/\"/g, '').replace(/\[/g, '').replace(/\]/g, '').split(' ');
                                     var words = [];
                                     words = keywordForCheck.toLowerCase().replace(/\+/g, '').replace(/\"/g, '').replace(/\[/g, '').replace(/\]/g, '').split(' '); // разбиваем ключевую фразу на слова
                                     // Logger.log(words);
@@ -279,7 +286,7 @@ function main() {
                                     var diffWords = negativeWords.diff(words);
                                     if (diffWords.length == 0) {
                                         checkResult(false);
-                                        // Logger.log('(4) Фраза: ' + keywordForCheck + ' Минус-фраза: ' + negativeKeyword);
+                                        // Logger.log('(4) Фраза: ' + keywordForCheck + ' Минус-фраза: ' + negativeWord);
                                     }
                                 } else {
                                     var words = [];
@@ -287,9 +294,9 @@ function main() {
                                     // Logger.log(words);
                                     words.forEach(
                                         function (word) {
-                                            if (negativeKeyword == word) { // проверяем совпадение минус-фразы(слова), со словами в ключевой фразе
+                                            if (negativeWord == word) { // проверяем совпадение минус-фразы(слова), со словами в ключевой фразе
                                                 checkResult(false);
-                                                // Logger.log('(5) Фраза: ' + keywordForCheck + ' Минус-фраза: ' + negativeKeyword);
+                                                // Logger.log('(5) Фраза: ' + keywordForCheck + ' Минус-фраза: ' + negativeWord);
                                             }
                                         }
                                     );

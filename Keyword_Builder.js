@@ -30,8 +30,42 @@ function main() {
         var CampaignName = CampaignRow['CampaignName'];
         var CampaignId = CampaignRow['CampaignId'];
         if (CampaignRow) {
+            var negativesListFromCampaign = getCampaignNegatives();
             adGroupReport(); // Создаем ключи
         }
+    }
+
+    function getCampaignNegatives() {
+        var campaignNegativeKeywordsList = [];
+        var campaignIterator = AdWordsApp.campaigns()
+            .withCondition('CampaignId = ' + CampaignId)
+            .get();
+        if (campaignIterator.hasNext()) {
+            var campaign = campaignIterator.next();
+            var negativeKeywordListSelector = campaign.negativeKeywordLists() // Получаем минус-слова из списков
+                .withCondition('Status = ACTIVE');
+            var negativeKeywordListIterator = negativeKeywordListSelector
+                .get();
+            while (negativeKeywordListIterator.hasNext()) {
+                var negativeKeywordList = negativeKeywordListIterator.next();
+                var sharedNegativeKeywordIterator = negativeKeywordList.negativeKeywords()
+                    .get();
+                var sharedNegativeKeywords = [];
+                while (sharedNegativeKeywordIterator.hasNext()) {
+                    var negativeKeywordFromList = sharedNegativeKeywordIterator.next();
+                    sharedNegativeKeywords[sharedNegativeKeywords.length] = negativeKeywordFromList.getText();
+                }
+                campaignNegativeKeywordsList = campaignNegativeKeywordsList.concat(campaignNegativeKeywordsList, sharedNegativeKeywords);
+            }
+            var campaignNegativeKeywordIterator = campaign.negativeKeywords() // Получаем минус-слова из кампании
+                .get();
+            while (campaignNegativeKeywordIterator.hasNext()) {
+                var campaignNegativeKeyword = campaignNegativeKeywordIterator.next();
+                campaignNegativeKeywordsList[campaignNegativeKeywordsList.length] = campaignNegativeKeyword.getText();
+            }
+        }
+        campaignNegativeKeywordsList = campaignNegativeKeywordsList.sort();
+        return campaignNegativeKeywordsList;
     }
 
     function adGroupReport() {
@@ -170,47 +204,21 @@ function main() {
 
             function getNegativeKeywordForAdGroup() {
                 var fullNegativeKeywordsList = [];
-                var campaignIterator = AdWordsApp.campaigns()
+
+                var adGroupIterator = AdWordsApp.adGroups() // Получаем минус-слова из группы
                     .withCondition('CampaignId = ' + CampaignId)
+                    .withCondition('AdGroupId = ' + AdGroupId)
                     .get();
-                if (campaignIterator.hasNext()) {
-                    var campaign = campaignIterator.next();
-                    var negativeKeywordListSelector = campaign.negativeKeywordLists() // Получаем минус-слова из списков
-                        .withCondition('Status = ACTIVE');
-                    var negativeKeywordListIterator = negativeKeywordListSelector
+                if (adGroupIterator.hasNext()) {
+                    var adGroup = adGroupIterator.next();
+                    var adGroupNegativeKeywordIterator = adGroup.negativeKeywords()
                         .get();
-                    while (negativeKeywordListIterator.hasNext()) {
-                        var negativeKeywordList = negativeKeywordListIterator.next();
-                        var sharedNegativeKeywordIterator = negativeKeywordList.negativeKeywords()
-                            .get();
-                        var sharedNegativeKeywords = [];
-                        while (sharedNegativeKeywordIterator.hasNext()) {
-                            var negativeKeywordFromList = sharedNegativeKeywordIterator.next();
-                            sharedNegativeKeywords[sharedNegativeKeywords.length] = negativeKeywordFromList.getText();
-                        }
-                        fullNegativeKeywordsList = fullNegativeKeywordsList.concat(fullNegativeKeywordsList, sharedNegativeKeywords);
-                    }
-                    var campaignNegativeKeywordIterator = campaign.negativeKeywords() // Получаем минус-слова из кампании
-                        .get();
-                    while (campaignNegativeKeywordIterator.hasNext()) {
-                        var campaignNegativeKeyword = campaignNegativeKeywordIterator.next();
-                        fullNegativeKeywordsList[fullNegativeKeywordsList.length] = campaignNegativeKeyword.getText();
-                    }
-                    var adGroupIterator = AdWordsApp.adGroups() // Получаем минус-слова из группы
-                        .withCondition('CampaignId = ' + CampaignId)
-                        .withCondition('AdGroupId = ' + AdGroupId)
-                        .get();
-                    if (adGroupIterator.hasNext()) {
-                        var adGroup = adGroupIterator.next();
-                        var adGroupNegativeKeywordIterator = adGroup.negativeKeywords()
-                            .get();
-                        while (adGroupNegativeKeywordIterator.hasNext()) {
-                            var adGroupNegativeKeyword = adGroupNegativeKeywordIterator.next();
-                            fullNegativeKeywordsList[fullNegativeKeywordsList.length] = adGroupNegativeKeyword.getText();
-                        }
+                    while (adGroupNegativeKeywordIterator.hasNext()) {
+                        var adGroupNegativeKeyword = adGroupNegativeKeywordIterator.next();
+                        fullNegativeKeywordsList[fullNegativeKeywordsList.length] = adGroupNegativeKeyword.getText();
                     }
                 }
-                fullNegativeKeywordsList = fullNegativeKeywordsList.sort();
+                fullNegativeKeywordsList = fullNegativeKeywordsList.concat(fullNegativeKeywordsList, negativesListFromCampaign).sort();
                 return fullNegativeKeywordsList;
             }
 

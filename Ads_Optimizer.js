@@ -97,8 +97,10 @@ function main() {
                 clicksStat[clicksStat.length] = clicks;
                 conversionCostStat[conversionCostStat.length] = conversionCost;
             }
+
             lowestClicks = getMinOfArray(clicksStat);
             bestConversionCost = getMinOfArray(conversionCostStat);
+
             if (lowestClicks < 100) {
                 for (var i = 0; i < stats.length; i++) {
                     var statsRow = stats[i];

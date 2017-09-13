@@ -15,8 +15,8 @@ function main() {
 
     var campaignPerfomaceAWQL = 'SELECT CampaignName, CampaignId ' +
         'FROM CAMPAIGN_PERFORMANCE_REPORT ' +
-        'WHERE CampaignStatus = ENABLED AND AdvertisingChannelType = SEARCH ' +
-        'DURING TODAY';
+        'WHERE CampaignStatus = ENABLED AND AdvertisingChannelType = SEARCH AND Clicks > 100 ' +
+         'DURING ' + customDateRange();
     var campaignPerfomaceRowsIter = AdWordsApp.report(campaignPerfomaceAWQL, REPORTING_OPTIONS).rows();
     while (campaignPerfomaceRowsIter.hasNext()) {
         var CampaignRow = campaignPerfomaceRowsIter.next();
@@ -75,7 +75,7 @@ function main() {
                     };
                     adsStats[adsStats.length] = statsRow;
                     if (adsStatus == 'enabled') {
-                        pauseAdsInAdGroup(adsId);
+                        toggleAdsInAdGroup(adsId, 'pause');
                         Logger.log('Выключаем объявление: ' + adsId);
                     }
                 }
@@ -106,7 +106,7 @@ function main() {
                     var statsRow = stats[i];
                     var clicks = statsRow['ClicksCol'];
                     if (clicks == lowestClicks) {
-                        enableAdsInAdGroup(statsRow['IdCol']);
+                        toggleAdsInAdGroup(statsRow['IdCol'], 'enable');
                         Logger.log('Включаем объявление: ' + statsRow['IdCol']);
                     }
                 }
@@ -116,41 +116,30 @@ function main() {
                     var statsRow = stats[i];
                     var conversionCost = statsRow['CostPerConversionCol'];
                     if (conversionCost == bestConversionCost) {
-                        enableAdsInAdGroup(statsRow['IdCol']);
+                        toggleAdsInAdGroup(statsRow['IdCol'], 'enable');
                         Logger.log('Включаем лучшее объявление: ' + statsRow['IdCol']);
                     }
                 }
             }
         }
 
-        function pauseAdsInAdGroup(adsId) {
+        function toggleAdsInAdGroup(adId, status) {
             var adGroupIterator = AdWordsApp.adGroups()
                 .withCondition('AdGroupId = ' + AdGroupId)
                 .get();
             if (adGroupIterator.hasNext()) {
                 var adGroup = adGroupIterator.next();
                 var adsIterator = adGroup.ads()
-                    .withCondition('Id = ' + adsId)
+                    .withCondition('Id = ' + adId)
                     .get();
                 while (adsIterator.hasNext()) {
                     var ad = adsIterator.next();
-                    ad.pause();
-                }
-            }
-        }
-
-        function enableAdsInAdGroup(adsId) {
-            var adGroupIterator = AdWordsApp.adGroups()
-                .withCondition('AdGroupId = ' + AdGroupId)
-                .get();
-            if (adGroupIterator.hasNext()) {
-                var adGroup = adGroupIterator.next();
-                var adsIterator = adGroup.ads()
-                    .withCondition('Id = ' + adsId)
-                    .get();
-                while (adsIterator.hasNext()) {
-                    var ad = adsIterator.next();
-                    ad.enable();
+                    if (status == 'pause') {
+                        ad.pause();
+                    }
+                    if (status == 'enable') {
+                        ad.enable();
+                    }
                 }
             }
         }

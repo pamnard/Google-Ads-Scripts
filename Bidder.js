@@ -1,10 +1,11 @@
 function main() {
 
-    var ARPU = 15; // APRU на пользователя без партнёра
-    var AverageCheck = 190; // Средний чек на пользователя без партнёра
+    var ARPU = 9; // APRU на пользователя без партнёра
+    var AverageCheck = 180; // Средний чек на пользователя без партнёра
 
     ARPU = +Math.round(ARPU / 3);
     AverageCheck = +Math.round(AverageCheck / 3);
+    ARPU = +Math.round(((AverageCheck - ARPU) * 0.2) + ARPU); // Увеличиваем допустимый CPL на 10% снижения учета конверсий на 10%
 
     var minPosition = 2; // Минимально удерживаемая позиция
 
@@ -19,7 +20,7 @@ function main() {
 
     var campaignPerfomaceAWQL = 'SELECT CampaignName, CampaignId ' +
         'FROM CAMPAIGN_PERFORMANCE_REPORT ' +
-        'WHERE CampaignStatus = ENABLED AND AdvertisingChannelType = SEARCH ' + // AND CampaignName DOES_NOT_CONTAIN_IGNORE_CASE DSA AND CampaignName DOES_NOT_CONTAIN "["
+        'WHERE CampaignStatus = ENABLED AND AdvertisingChannelType = SEARCH AND CampaignName DOES_NOT_CONTAIN_IGNORE_CASE DSA AND CampaignName DOES_NOT_CONTAIN "[" ' +
         'DURING TODAY';
     var campaignPerfomaceRowsIter = AdWordsApp.report(campaignPerfomaceAWQL).rows();
     while (campaignPerfomaceRowsIter.hasNext()) {
@@ -64,12 +65,13 @@ function main() {
             if (keywordIterator.hasNext()) {
                 while (keywordIterator.hasNext()) {
                     var keyword = keywordIterator.next();
-                    var keywordBidding = keyword.bidding();
-                    var keywordCpc = keywordBidding.getCpc();
-                    keywordCpc = keywordCpc.toString();
-                    keyword.bidding().setCpc(bidCpc(keywordCpc));
-                    Logger.log('Повышаем позицию');
-                    Logger.log('Keyword: ' + keyword.getText() + ' OldCPC: ' + keywordCpc + ' NewCPC: ' + bidCpc(keywordCpc));
+                    var keyStrategy = keyword.bidding().getStrategyType().toString();
+                    var keywordCpc = keyword.bidding().getCpc().toString();
+                    if (keyStrategy == 'MANUAL_CPC') {
+                        keyword.bidding().setCpc(bidCpc(keywordCpc));
+                        Logger.log('Повышаем позицию');
+                        Logger.log('Keyword: ' + keyword.getText() + ' OldCPC: ' + keywordCpc + ' NewCPC: ' + bidCpc(keywordCpc));
+                    }
                 }
             }
         }
@@ -83,13 +85,16 @@ function main() {
             if (keywordIterator.hasNext()) {
                 while (keywordIterator.hasNext()) {
                     var keyword = keywordIterator.next();
+                    var keyStrategy = keyword.bidding().getStrategyType().toString();
                     var keywordFirstPageCpc = parseFloat(keyword.getFirstPageCpc()).toFixed(2);
                     var keywordCpc = parseFloat(keyword.bidding().getCpc()).toFixed(2);
-                    if (keywordFirstPageCpc > keywordCpc) {
-                        keyword.bidding().setCpc(bidCpc(keywordCpc));
+                    if (keyStrategy == 'MANUAL_CPC') {
+                        if (keywordFirstPageCpc > keywordCpc) {
+                            keyword.bidding().setCpc(bidCpc(keywordCpc));
+                            Logger.log('Выводим на 1-ю страницу');
+                            Logger.log('Keyword: ' + keyword.getText() + ' OldCPC: ' + keywordCpc + ' NewCPC: ' + bidCpc(keywordCpc));
+                        }
                     }
-                    Logger.log('Выводим на 1-ю страницу');
-                    Logger.log('Keyword: ' + keyword.getText() + ' OldCPC: ' + keywordCpc + ' NewCPC: ' + bidCpc(keywordCpc));
                 }
             }
         }

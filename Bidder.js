@@ -66,7 +66,7 @@ function main() {
                 while (keywordIterator.hasNext()) {
                     var keyword = keywordIterator.next();
                     var keyStrategy = keyword.bidding().getStrategyType().toString();
-                    var keywordCpc = keyword.bidding().getCpc().toString();
+                    var keywordCpc = parseFloat(keyword.bidding().getCpc()).toFixed(2);
                     if (keyStrategy == 'MANUAL_CPC') {
                         keyword.bidding().setCpc(bidCpc(keywordCpc));
                         Logger.log('Повышаем позицию');

@@ -5,15 +5,18 @@ function main() {
         apiVersion: 'v201705'
     };
 
-    // Ярлык которым скрипт помечает созданные слова. Его предварительно надо создать в разделе "Ярлыки\Labels".
+    // Ярлык которым скрипт помечает созданные слова
     var scriptLabel = 'Keyword Builder';
 
     // Указываем количество дней для выборки
-    // Если хотим использовать данные о конверсиях или доходности, то в качестве значения следует указывать число больее чем окно конверсии. 
+    // Если хотим использовать данные о конверсиях или доходности, то в качестве значения 
+    // следует указывать число больее чем окно конверсии. 
     var customDaysInDateRange = 30;
 
-    // Указываем на сколько дней от сегодняшнего мы сдвигаем выборку. Нужно для того чтобы не брать те дни когда запаздывает статистика.
-    // Если хотим использовать данные о конверсиях или доходности, то в качестве значения следует указывать число равное дням в окне конверсии. 
+    // Указываем на сколько дней от сегодняшнего мы сдвигаем выборку. 
+    // Нужно для того чтобы не брать те дни когда запаздывает статистика.
+    // Если хотим использовать данные о конверсиях или доходности, то в качестве значения 
+    // следует указывать число равное дням в окне конверсии. 
     var customDateRangeShift = 0;
 
     // -----------------------------------
@@ -22,7 +25,8 @@ function main() {
 
     var campaignPerfomaceAWQL = 'SELECT CampaignName, CampaignId ' +
         'FROM CAMPAIGN_PERFORMANCE_REPORT ' +
-        'WHERE CampaignStatus = ENABLED AND AdvertisingChannelType = SEARCH ' + // AND CampaignName DOES_NOT_CONTAIN_IGNORE_CASE DSA AND CampaignName DOES_NOT_CONTAIN "["
+        'WHERE CampaignStatus = ENABLED AND AdvertisingChannelType = SEARCH ' + 
+//      'AND CampaignName DOES_NOT_CONTAIN_IGNORE_CASE DSA AND CampaignName DOES_NOT_CONTAIN "["
         'DURING TODAY';
     var campaignPerfomaceRowsIter = AdWordsApp.report(campaignPerfomaceAWQL, REPORTING_OPTIONS).rows();
     while (campaignPerfomaceRowsIter.hasNext()) {

@@ -5,7 +5,6 @@ function main() {
 
     ARPU = +Math.round(ARPU / 3);
     AverageCheck = +Math.round(AverageCheck / 3);
-    ARPU = +Math.round(((AverageCheck - ARPU) * 0.2) + ARPU); // Увеличиваем допустимый CPL на 10% снижения учета конверсий на 10%
 
     var minPosition = 2; // Минимально удерживаемая позиция
 
@@ -20,7 +19,8 @@ function main() {
 
     var campaignPerfomaceAWQL = 'SELECT CampaignName, CampaignId ' +
         'FROM CAMPAIGN_PERFORMANCE_REPORT ' +
-        'WHERE CampaignStatus = ENABLED AND AdvertisingChannelType = SEARCH AND CampaignName DOES_NOT_CONTAIN_IGNORE_CASE DSA AND CampaignName DOES_NOT_CONTAIN "[" ' +
+        'WHERE CampaignStatus = ENABLED AND AdvertisingChannelType = SEARCH AND BiddingStrategyType = MANUAL_CPC ' +
+        'AND CampaignName DOES_NOT_CONTAIN_IGNORE_CASE DSA AND CampaignName DOES_NOT_CONTAIN "[" ' +
         'DURING TODAY';
     var campaignPerfomaceRowsIter = AdWordsApp.report(campaignPerfomaceAWQL).rows();
     while (campaignPerfomaceRowsIter.hasNext()) {

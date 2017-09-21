@@ -1,10 +1,10 @@
 function main() {
-    
+
     // In progress 
-    
+
     var parseCountry = 'IDN'; // In ISO 3166-1 alpha-3 format
     var parseLanguage = 'id'; // In ISO 639-1 format
-    
+
     var regionGoogle = {
         {
             code: 'AFG',
@@ -942,5 +942,106 @@ function main() {
             country: 'Zimbabwe',
             languages: ['en', 'sn'] // English, Shona
         }
+    }
+
+    var alphabet = {
+        /*af - Afrikaans
+        am - Amharic
+        ar - Arabic
+        bg - Bulgarian
+        bn - Bengali
+        bs - Bosnian
+        ca - Catalan; Valencian
+        crs - Kreol Seselwa
+        cs - Czech
+        de - German
+        ee - Ewe
+        es - Español (Latinoamérica)
+        es - Spanish; Castilian
+        et - Estonian
+        fa - Persian
+        fo - Faroese
+        fr - French
+        ga - Irish
+        ha - Hausa
+        hi - Hindi
+        hr - Croatian
+        ht - Haitian; Haitian Creole or Kreyòl Ayisyen
+        hu - Hungarian
+        hy - Armenian
+        id - Indonesian
+        in - Lingala
+        is - Icelandic
+        it - Italian
+        iw - Hebrew
+        ja - Japanese
+        jw - Basa Jawa
+        ka - Georgian
+        kg - Kongo
+        kk - Kazakh
+        km - Khmer
+        ko - Korean
+        kri - Krio
+        ky - Kyrgyz
+        lg - Ganda
+        lo - Lao
+        lt - Lithuanian
+        lv - Latvian
+        mg - Malagasy
+        mi - Māori
+        mk - Macedonian
+        mn - Mongolian
+        mo - Moldovan
+        mt - Maltese
+        ne - Nepali
+        nl - Dutch
+        nn - Norwegian Nynorsk
+        no - Norwegian
+        ny - Chichewa; Chewa; Nyanja
+        pl - Polish
+        ps - Pashto, Pushto
+        pt-BR - Portuguese (Brasil)
+        pt-PT - Portuguese
+        qu - Quechua
+        ro - Romanian, Moldavian, Moldovan
+        ru - Russian
+        si - Sinhala, Sinhalese
+        sk - Slovak
+        sl - Slovene
+        sn - Shona
+        so - Somali
+        sr - Serbian
+        sr-ME - Montenegro - Serbian (Latin)
+        st - Southern Sotho
+        st - Southern Sotho or Sesotho
+        sv - Swedish
+        sw - Swahili
+        sw - Swahili or Kiswahilior Kiswahili
+        tg - Tajik
+        th - Thai
+        ti - Tigrinya
+        tk - Turkmen
+        tl - Tagalog
+        tn - Tswana
+        to - Tonga (Tonga Islands)
+        tr - Turkish
+        tum -
+        uk - Ukrainian
+        ur - Urdu
+        wo - Wolof
+        yo - Yoruba
+        zh - Chinese
+        zh-CN - Chinese (Simplified Han)
+        zh-TW - Chinese (Traditional Han)*/
+        az = ['a', 'b', 'c', 'ç', 'd', 'e', 'ə', 'f', 'g', 'ğ', 'h', 'x', 'ı', 'i', 'j', 'k', 'q', 'l', 'm', 'n', 'o', 'ö', 'p', 'r', 's', 'ş', 't', 'u', 'ü', 'v', 'y', 'z'], // Azerbaijani
+        ckb = ['a', 'b', 'c', 'ç', 'd', 'e', 'ê', 'f', 'g', 'h', 'i', 'î', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 'ş', 't', 'u', 'û', 'v', 'w', 'x', 'y', 'z'], // Kurdish
+        be = ['a', 'b', 'c', 'ć', 'č', 'd', 'e', 'ě', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'ľ', 'm', 'n', 'ň', 'o', 'p', 'r', 's', 'ś', 'š', 't', 'u', 'ŭ', 'y', 'z', 'ź', 'ž'], // Belarusian
+        da = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'æ', 'ø', 'å'], // Danish
+        el = ['α', 'β', 'γ', 'δ', 'ε', 'ζ', 'η', 'θ', 'ι', 'κ', 'λ', 'μ', 'ν', 'ξ', 'ο', 'π', 'ρ', 'σ', 'ς', 'τ', 'υ', 'φ', 'χ', 'ψ', 'ω'], // Greek
+        en = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'], // English
+        fi = ['a', 'ä', 'å', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'ö', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'], // Finnish
+        ms = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'], // Malay
+        vi = ['a', 'ă', 'â', 'b', 'c', 'd', 'đ', 'e', 'ê', 'g', 'h', 'i', 'k', 'l', 'm', 'n', 'o', 'ô', 'ơ', 'p', 'q', 'r', 's', 't', 'u', 'ư', 'v', 'x', 'y'], // Vietnamese
+        uz = ['а', 'b', 'd', 'е', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'о', 'p', 'q', 'r', 's', 't', 'u', 'v', 'x', 'y', 'z', 'oʻ', 'gʻ', 'sh', 'ch', 'ng'] // Uzbek
     }
 }

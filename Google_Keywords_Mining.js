@@ -1,14 +1,16 @@
 function main() {
-
-    var parseCountry = ''; // In ISO 3166-1 alpha-3 format
-    var parseLanguage = ''; // In ISO 639-1 format
+    
     // In progress 
+    
+    var parseCountry = 'IDN'; // In ISO 3166-1 alpha-3 format
+    var parseLanguage = 'id'; // In ISO 639-1 format
+    
     var regionGoogle = {
         {
             code: 'AFG',
             domain: 'google.com.af',
             country: 'Afghanistan',
-            languages: ['fa', 'ps'] // Persian, Pushto
+            languages: ['fa', 'ps'] // Persian\Farsi, Pushto
         } {
             code: 'DZA',
             domain: 'google.dz',
@@ -480,467 +482,462 @@ function main() {
             country: 'Lebanon',
             languages: ['ar', 'fr'] // Arabic, French
         } {
-            code: 'ls',
+            code: 'LSO',
             domain: 'google.co.ls',
             country: 'Lesotho',
             languages: ['st', 'en'] // Southern Sotho, English
         } {
-            code: 'ly',
+            code: 'LBY',
             domain: 'google.com.ly',
             country: 'Libya',
             languages: ['ar', 'it'] // Arabic, Italian
         } {
-            code: 'li',
+            code: 'LIE',
             domain: 'google.li',
             country: 'Liechtenstein',
             languages: [' de'] // German
         } {
-            code: 'lt',
+            code: 'LTU',
             domain: 'google.lt',
             country: 'Lithuania',
             languages: ['lt'] // Lithuanian
         } {
-            code: 'lu',
+            code: 'LUX',
             domain: 'google.lu',
             country: 'Luxembourg',
             languages: ['de', 'fr'] // German, French
         } {
-            code: 'mk',
+            code: 'MKD',
             domain: 'google.mk',
             country: 'Macedonia, The Former Yugoslav Republic of',
             languages: ['mk'] // Macedonian
         } {
-            code: 'mg',
+            code: 'MDG',
             domain: 'google.mg',
             country: 'Madagascar',
             languages: ['mg', 'fr'] // Malagasy, French
         } {
-            code: 'mw',
+            code: 'MWI',
             domain: 'google.mw',
             country: 'Malawi',
             languages: ['ny'] // Nyanja
         } {
-            code: 'my',
+            code: 'MYS',
             domain: 'google.com.my',
             country: 'Malaysia',
             languages: ['ms'] // Malay
         } {
-            code: 'mv',
+            code: 'MDV',
             domain: 'google.mv',
             country: 'Maldives',
             languages: ['en'] // English
         } {
-            code: 'ml',
+            code: 'MLI',
             domain: 'google.ml',
             country: 'Mali',
             languages: ['fr'] // French
         } {
-            code: 'mt',
+            code: 'MLT',
             domain: 'google.com.mt',
             country: 'Malta',
             languages: ['mt', 'en'] // Maltese, English
         } {
-            code: 'mu',
+            code: 'MUS',
             domain: 'google.mu',
             country: 'Mauritius',
             languages: ['en', 'fr'] // English, French
         } {
-            code: 'mx',
+            code: 'MEX',
             domain: 'google.com.mx',
             country: 'Mexico',
             languages: ['es'] // Español (Latinoamérica)
         } {
-            code: 'md',
+            code: 'MDA',
             domain: 'google.md',
             country: 'Moldova, Republic of',
             languages: ['mo', 'ru'] // Moldovan, Russian
         } {
-            code: 'mn',
+            code: 'MNG',
             domain: 'google.mn',
             country: 'Mongolia',
             languages: ['mn'] // Mongolian
         } {
-            code: 'me',
+            code: 'MNE',
             domain: 'google.me',
             country: 'Montenegro',
             languages: ['sr'] // Serbian
         } {
-            code: 'ms',
+            code: 'MSR',
             domain: 'google.ms',
             country: 'Montserrat',
             languages: ['en'] // English
         } {
-            code: 'ma',
+            code: 'MAR',
             domain: 'google.co.ma',
             country: 'Morocco',
             languages: ['fr', 'ar'] // French, Arabic
         } {
-            code: 'mz',
+            code: 'MOZ',
             domain: 'google.co.mz',
             country: 'Mozambique',
             languages: ['pt', 'sw'] // Portuguese, Swahili
         } {
-            code: 'na',
+            code: 'NAM',
             domain: 'google.com.na',
             country: 'Namibia',
             languages: ['en', 'ar'] // English, Afrikaans
         } {
-            code: 'nr',
+            code: 'NRU',
             domain: 'google.nr',
             country: 'Nauru',
             languages: ['en'] // English
         } {
-            code: 'np',
+            code: 'NPL',
             domain: 'google.com.np',
             country: 'Nepal',
             languages: ['ne'] // Nepali
         } {
-            code: 'nl',
+            code: 'NLD',
             domain: 'google.nl',
             country: 'Netherlands',
             languages: ['nl', 'en'] // Dutch, English
         } {
-            code: 'nz',
+            code: 'NZL',
             domain: 'google.co.nz',
             country: 'New Zealand',
             languages: ['en', 'mi'] // English, Māori
         } {
-            code: 'ni',
+            code: 'NIC',
             domain: 'google.com.ni',
             country: 'Nicaragua',
             languages: ['es'] // Español (Latinoamérica)
         } {
-            code: 'ne',
+            code: 'NER',
             domain: 'google.ne',
             country: 'Niger',
             languages: ['fr', 'ha'] // French, Hausa
         } {
-            code: 'ng',
+            code: 'NGA',
             domain: 'google.com.ng',
             country: 'Nigeria',
             languages: ['en', 'ha'] // English, Hausa
         } {
-            code: 'nu',
+            code: 'NIU',
             domain: 'google.nu',
             country: 'Niue',
             languages: ['en'] // English
         } {
-            code: 'nf',
+            code: 'NFK',
             domain: 'google.com.nf',
             country: 'Norfolk Island',
             languages: ['en'] // English
         } {
-            code: 'no',
+            code: 'NOR',
             domain: 'google.no',
             country: 'Norway',
             languages: ['no', 'nn'] // Norwegian, Norwegian Nynorsk
         } {
-            code: 'om',
+            code: 'OMN',
             domain: 'google.com.om',
             country: 'Oman',
             languages: ['ar'] // Arabic
         } {
-            code: 'pk',
+            code: 'PAK',
             domain: 'google.com.pk',
             country: 'Pakistan',
             languages: ['en', 'ur'] // English, Urdu
         } {
-            code: 'ps',
+            code: 'PSE',
             domain: 'google.ps',
-            country: 'Palestinian Territory, Occupied',
+            country: 'Palestine, State of',
             languages: ['ar'] // Arabic
         } {
-            code: 'pa',
+            code: 'PAN',
             domain: 'google.com.pa',
             country: 'Panama',
             languages: ['es'] // Español (Latinoamérica)
         } {
-            code: 'py',
+            code: 'PRY',
             domain: 'google.com.py',
             country: 'Paraguay',
             languages: ['es'] // Español (Latinoamérica)
         } {
-            code: 'pe',
+            code: 'PER',
             domain: 'google.com.pe',
             country: 'Peru',
             languages: ['es', 'qu'] // Español (Latinoamérica), Quechua
         } {
-            code: 'ph',
+            code: 'PHL',
             domain: 'google.com.ph',
             country: 'Philippines',
             languages: ['tl'] // Tagalog
         } {
-            code: 'pn',
+            code: 'PCN',
             domain: 'google.pn',
             country: 'Pitcairn',
             languages: ['en'] // English
         } {
-            code: 'pl',
+            code: 'POL',
             domain: 'google.pl',
             country: 'Poland',
             languages: ['pl'] // Polish
         } {
-            code: 'pt',
+            code: 'PRT',
             domain: 'google.pt',
             country: 'Portugal',
             languages: ['pt'] // Portuguese
         } {
-            code: 'pr',
+            code: 'PRI',
             domain: 'google.com.pr',
             country: 'Puerto Rico',
             languages: ['es'] // Español (Latinoamérica)
         } {
-            code: 'qa',
+            code: 'QAT',
             domain: 'google.com.qa',
             country: 'Qatar',
             languages: ['ar'] // Arabic
         } {
-            code: 'cat',
-            domain: 'google.cat',
-            country: 'reserved for the Catalan linguistic and cultural',
-            languages: ['ca'] // Catalan
-        } {
-            code: 'ro',
+            code: 'ROU',
             domain: 'google.ro',
             country: 'Romania',
             languages: ['ro', 'hu'] // Romanian, Hungarian
         } {
-            code: 'ru',
+            code: 'RUS',
             domain: 'google.ru',
             country: 'Russia',
             languages: ['ru'] // Russian
         } {
-            code: 'rw',
+            code: 'RWA',
             domain: 'google.rw',
             country: 'Rwanda',
             languages: ['en', 'fr'] // English, French
         } {
-            code: 'sh',
+            code: 'SHN',
             domain: 'google.sh',
             country: 'Saint Helena',
             languages: ['en'] // English
         } {
-            code: 'vc',
+            code: 'VCT',
             domain: 'google.com.vc',
             country: 'Saint Vincent and the Grenadines',
             languages: ['en'] // English
         } {
-            code: 'ws',
+            code: 'WSM',
             domain: 'google.ws',
             country: 'Samoa',
             languages: ['en'] // English
         } {
-            code: 'sm',
+            code: 'SMR',
             domain: 'google.sm',
             country: 'San Marino',
             languages: ['it'] // Italian
         } {
-            code: 'st',
+            code: 'STP',
             domain: 'google.st',
             country: 'Sao Tome and Principe',
             languages: ['pt'] // Portuguese
         } {
-            code: 'sa',
+            code: 'SAU',
             domain: 'google.com.sa',
             country: 'Saudi Arabia',
             languages: ['ar'] // Arabic
         } {
-            code: 'sn',
+            code: 'SEN',
             domain: 'google.sn',
             country: 'Senegal',
             languages: ['fr', 'wo'] // French, Wolof
         } {
-            code: 'rs',
+            code: 'SRB',
             domain: 'google.rs',
             country: 'Serbia',
             languages: ['sr'] // Serbian
         } {
-            code: 'sc',
+            code: 'SYC',
             domain: 'google.sc',
             country: 'Seychelles',
             languages: ['crs', 'fr'] // Kreol Seselwa, French
         } {
-            code: 'sl',
+            code: 'SLE',
             domain: 'google.com.sl',
             country: 'Sierra Leone',
             languages: ['en', 'kri'] // English, Krio
         } {
-            code: 'sg',
+            code: 'SGP',
             domain: 'google.com.sg',
             country: 'Singapore',
             languages: ['en', 'cn'] // English, Chinese (Simplified)'
         } {
-            code: 'sk',
+            code: 'SVK',
             domain: 'google.sk',
             country: 'Slovakia',
             languages: ['sk'] // Slovak
         } {
-            code: 'si',
+            code: 'SVN',
             domain: 'google.si',
             country: 'Slovenia',
             languages: ['sl'] // Slovene
         } {
-            code: 'sb',
+            code: 'SLB',
             domain: 'google.com.sb',
             country: 'Solomon Islands',
             languages: ['en'] // English
         } {
-            code: 'so',
+            code: 'SOM',
             domain: 'google.so',
             country: 'Somalia',
             languages: ['so', 'ar'] // Somali, Arabic
         } {
-            code: 'za',
+            code: 'ZAF',
             domain: 'google.co.za',
             country: 'South Africa',
             languages: ['af', 'st'] // Afrikaans, Southern Sotho or Sesotho
         } {
-            code: 'es',
+            code: 'ESP',
             domain: 'google.es',
             country: 'Spain',
             languages: ['es', 'ca'] // Spanish, Catalan
         } {
-            code: 'lk',
+            code: 'LKA',
             domain: 'google.lk',
             country: 'Sri Lanka',
             languages: ['en', 'si'] // English, Sinhalese
         } {
-            code: 'se',
+            code: 'SWE',
             domain: 'google.se',
             country: 'Sweden',
             languages: ['sv'] // Swedish
         } {
-            code: 'ch',
+            code: 'CHE',
             domain: 'google.ch',
             country: 'Switzerland',
             languages: ['de', 'fr'] // German, French
         } {
-            code: 'tw',
+            code: 'TWN',
             domain: 'google.com.tw',
             country: 'Taiwan, Province of China',
             languages: ['zh'] // Chinese
         } {
-            code: 'tj',
+            code: 'TJK',
             domain: 'google.com.tj',
             country: 'Tajikistan',
             languages: ['tg', 'ru'] // Tajik, Russian
         } {
-            code: 'tz',
+            code: 'TZA',
             domain: 'google.co.tz',
             country: 'Tanzania, United Republic of',
             languages: ['sw'] // Swahili
         } {
-            code: 'th',
+            code: 'THA',
             domain: 'google.co.th',
             country: 'Thailand',
             languages: ['th'] // Thai
         } {
-            code: 'tl',
+            code: 'TLS',
             domain: 'google.tl',
-            country: 'Timor Leste',
+            country: 'Timor-Leste',
             languages: ['pt'] // Portuguese
         } {
-            code: 'tg',
+            code: 'TGO',
             domain: 'google.tg',
             country: 'Togo',
             languages: ['fr', 'ee'] // French, Ewe
         } {
-            code: 'tk',
+            code: 'TKL',
             domain: 'google.tk',
             country: 'Tokelau',
             languages: ['en'] // English
         } {
-            code: 'to',
+            code: 'TON',
             domain: 'google.to',
             country: 'Tonga',
             languages: ['en', 'to'] // English, Tonga
         } {
-            code: 'tt',
+            code: 'TTO',
             domain: 'google.tt',
             country: 'Trinidad and Tobago',
             languages: ['en', 'hi'] // English, Hindi
         } {
-            code: 'tn',
+            code: 'TUN',
             domain: 'google.tn',
             country: 'Tunisia',
             languages: ['ar', 'fr'] // Arabic, French
         } {
-            code: 'tr',
+            code: 'TUR',
             domain: 'google.com.tr',
             country: 'Turkey',
             languages: ['tr'] // Turkish
         } {
-            code: 'tm',
+            code: 'TKM',
             domain: 'google.tm',
             country: 'Turkmenistan',
             languages: ['tk', 'ru'] // Turkmen, Russian
         } {
-            code: 'ug',
+            code: 'UGA',
             domain: 'google.co.ug',
             country: 'Uganda',
             languages: ['lg', 'sw'] // Ganda, Swahili
         } {
-            code: 'ua',
+            code: 'UKR',
             domain: 'google.com.ua',
             country: 'Ukraine',
             languages: ['uk', 'ru'] // Ukrainian, Russian
         } {
-            code: 'ae',
+            code: 'ARE',
             domain: 'google.ae',
             country: 'United Arab Emirates',
             languages: ['ar', 'fa'] // Arabic, Persian
         } {
-            code: 'uk',
+            code: 'GBR',
             domain: 'google.co.uk',
             country: 'United Kingdom',
             languages: ['en'] // English
         } {
-            code: 'com',
+            code: 'USA',
             domain: 'google.com',
             country: 'United States',
             languages: ['en'] // English
         } {
-            code: 'uy',
+            code: 'URY',
             domain: 'google.com.uy',
             country: 'Uruguay',
             languages: ['es'] // Español (Latinoamérica)
         } {
-            code: 'uz',
+            code: 'UZB',
             domain: 'google.co.uz',
             country: 'Uzbekistan',
             languages: ['uz', 'ru'] // Uzbek, Russian
         } {
-            code: 'vu',
+            code: 'VUT',
             domain: 'google.vu',
             country: 'Vanuatu',
             languages: ['en', 'fr'] // English, French
         } {
-            code: 've',
+            code: 'VEN',
             domain: 'google.co.ve',
             country: 'Venezuela, Bolivarian Republic of',
             languages: ['es'] // Español (Latinoamérica)
         } {
-            code: 'vn',
+            code: 'VNM',
             domain: 'google.com.vn',
             country: 'Viet Nam',
             languages: ['vi', 'fr'] // Vietnamese, French
         } {
-            code: 'vg',
+            code: 'VGB',
             domain: 'google.vg',
             country: 'Virgin Islands, British',
             languages: ['en'] // English
         } {
-            code: 'vi',
+            code: 'VIR',
             domain: 'google.co.vi',
             country: 'Virgin Islands, U.S.',
             languages: ['en'] // English
         } {
-            code: 'zm',
+            code: 'ZMB',
             domain: 'google.co.zm',
             country: 'Zambia',
             languages: ['en', 'ny'] // English, Nyanja
         } {
-            code: 'zw',
+            code: 'ZWE',
             domain: 'google.co.zw',
             country: 'Zimbabwe',
             languages: ['en', 'sn'] // English, Shona

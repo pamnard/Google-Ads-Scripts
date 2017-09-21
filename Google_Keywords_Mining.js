@@ -2,19 +2,19 @@ function main() {
 
     // In progress 
 
-    var parseCountry = 'USA'; // In ISO 3166-1 alpha-3 format
-    var parseLanguage = 'en'; // In ISO 639-1 format
+    var parseCountry = 'USA', // In ISO 3166-1 alpha-3 format
+        parseLanguage = 'en'; // In ISO 639-1 format
 
     setGoogleSettings(parseCountry, parseLanguage);
 
     function setGoogleSettings(countrycode, langcode) {
         var regionlist = regionGoogle();
         for (var i = 0; i < regionlist.length; i++) {
-            var row = regionlist[i];
-            var code = row[0];
-            var domain = row[1];
-            var country = row[2];
-            var languages = row[3];
+            var row = regionlist[i],
+                code = row[1],
+                domain = row[2],
+                country = row[3],
+                languages = row[4];
             if (code == countrycode) {
                 Logger.log('Выбрана страна: ' + country);
                 if (languages.indexOf(langcode) != -1) {

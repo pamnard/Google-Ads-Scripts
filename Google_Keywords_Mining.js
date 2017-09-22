@@ -2,29 +2,36 @@ function main() {
 
     // In progress 
 
-    var parseCountry = 'USA', // In ISO 3166-1 alpha-3 format
-        parseLanguage = 'en'; // In ISO 639-1 format
+    var parseCountry = 'IDN', // In ISO 3166-1 alpha-3 format
+        parseLanguage = 'id'; // In ISO 639-1 format
 
-    setGoogleSettings(parseCountry, parseLanguage);
+    var googleSettings = setGoogleSettings(parseCountry, parseLanguage);
+    
+    Logger.log(googleSettings.domain + ' - ' + googleSettings.lettersPairs);
 
     function setGoogleSettings(countrycode, langcode) {
-        var regionlist = regionGoogle();
+        var regionlist = regionGoogle(),
+            settings;
         for (var i = 0; i < regionlist.length; i++) {
             var row = regionlist[i],
-                code = row[1],
-                domain = row[2],
-                country = row[3],
-                languages = row[4];
-            if (code == countrycode) {
-                Logger.log('Выбрана страна: ' + country);
-                if (languages.indexOf(langcode) != -1) {
-                    Logger.log(code + ' - ' + domain + ' - ' + country + ' - ' + languages + ' - ' + alphabet(langcode));
+                codeCol = row[0],
+                domainCol = row[1],
+                countryCol = row[2],
+                languagesCol = row[3];
+            if (codeCol == countrycode) {
+                Logger.log('Выбрана страна: ' + countryCol);
+                if (languagesCol.indexOf(langcode) != -1) {
+                    // Logger.log(codeCol + ' - ' + domainCol + ' - ' + countryCol + ' - ' + languagesCol + ' - ' + alphabetMix(langcode));
+                    settings = {
+                        domain: domainCol,
+                        lettersPairs: alphabetMix(langcode)
+                    };
                 } else {
-                    Logger.log('Выбран не поддерживаемый язык: "' + langcode + '". Поддерживается: ' + languages);
+                    Logger.log('Выбран не поддерживаемый язык: "' + langcode + '". Поддерживается: ' + languagesCol);
                 }
-
             }
         }
+        return settings;
     }
 
     function regionGoogle() {
@@ -246,7 +253,6 @@ function main() {
             ht - Haitian; Haitian Creole or Kreyòl Ayisyen
             hu - Hungarian
             hy - Armenian
-            id - Indonesian
             in - Lingala
             is - Icelandic
             it - Italian
@@ -315,6 +321,7 @@ function main() {
             el: ['α', 'β', 'γ', 'δ', 'ε', 'ζ', 'η', 'θ', 'ι', 'κ', 'λ', 'μ', 'ν', 'ξ', 'ο', 'π', 'ρ', 'σ', 'ς', 'τ', 'υ', 'φ', 'χ', 'ψ', 'ω'], // Greek
             en: ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'], // English
             fi: ['a', 'ä', 'å', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'ö', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'], // Finnish
+            id: ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'], // Indonesian
             ms: ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'], // Malay
             ru: ['а', 'б', 'в', 'г', 'д', 'е', 'ё', 'ж', 'з', 'и', 'й', 'к', 'л', 'м', 'н', 'о', 'п', 'р', 'с', 'т', 'у', 'ф', 'х', 'ц', 'ч', 'ш', 'щ', 'ъ', 'ы', 'ь', 'э', 'ю', 'я'], // Russian
             vi: ['a', 'ă', 'â', 'b', 'c', 'd', 'đ', 'e', 'ê', 'g', 'h', 'i', 'k', 'l', 'm', 'n', 'o', 'ô', 'ơ', 'p', 'q', 'r', 's', 't', 'u', 'ư', 'v', 'x', 'y'], // Vietnamese
@@ -326,5 +333,22 @@ function main() {
                 return arr[row];
             }
         }
+    }
+    
+    function alphabetMix(lang) {
+        var letters = alphabet(lang);
+        var lettersPairs = [];
+        letters.forEach(
+            function(firstletter) {
+                var pair;
+                letters.forEach(
+                    function(secondletter) {
+                        pair = firstletter + secondletter;
+                        lettersPairs[lettersPairs.length] = pair;
+                    }
+                );
+            }
+        );
+        return lettersPairs;
     }
 }

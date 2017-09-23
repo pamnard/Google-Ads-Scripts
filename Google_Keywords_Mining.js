@@ -1,9 +1,5 @@
 /**********************************************************************************************************************
  * Keyword Generator Tool
- * Leverages Autocomplete to find potential keyword opportunities and negative keywords,
- * Version 1.2
- * Created By: Derek Martin
- * DerekMartinLA.com or MixedMarketingArtist.com
  **********************************************************************************************************************/
 function main() {
 

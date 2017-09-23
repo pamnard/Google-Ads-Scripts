@@ -1,23 +1,59 @@
+/**********************************************************************************************************************
+ * Keyword Generator Tool
+ * Leverages Autocomplete to find potential keyword opportunities and negative keywords,
+ * Version 1.2
+ * Created By: Derek Martin
+ * DerekMartinLA.com or MixedMarketingArtist.com
+ **********************************************************************************************************************/
 function main() {
-
-    // In progress 
 
     var parseCountry = 'IDN', // In ISO 3166-1 alpha-3 format
         parseLanguage = 'id'; // In ISO 639-1 format
 
-    var googleSettings = setGoogleSettings(parseCountry, parseLanguage);
+    var regionSettings = regionGoogle();
+    var regionIds = allRegionsIds();
+
+    Logger.log(getCampaignSettings());
     
-    Logger.log(googleSettings.domain + ' - ' + googleSettings.lettersPairs);
+    function getCampaignSettings() {
+      var settings = [];
+        var campaignIterator = AdWordsApp.campaigns()
+            .withCondition('Name = PK_Search_New_Brand')
+            .get();
+        if (campaignIterator.hasNext()) {
+            var campaign = campaignIterator.next();
+            var languageIterator = campaign.targeting().languages().get();
+            while (languageIterator.hasNext()) {
+                var campaignlanguage = languageIterator.next();
+                var row = {
+                  languageId: parseFloat(campaignlanguage.getId()).toFixed(),
+                  languageName: campaignlanguage.getName()
+                };
+                settings.push(row);
+            }
+            var targetedLocationIterator = campaign.targeting().targetedLocations().get();
+            while (targetedLocationIterator.hasNext()) {
+                var campaigntargetedLocation = targetedLocationIterator.next();
+                var row = {
+                    locationId: parseFloat(campaigntargetedLocation.getId()).toFixed(),
+                    locationName: campaigntargetedLocation.getName()
+                };
+                settings.push(row);
+            }
+        }
+        return settings;
+    }
+
+    var googleSettings = setGoogleSettings(parseCountry, parseLanguage);
 
     function setGoogleSettings(countrycode, langcode) {
-        var regionlist = regionGoogle(),
-            settings;
-        for (var i = 0; i < regionlist.length; i++) {
-            var row = regionlist[i],
-                codeCol = row[0],
-                domainCol = row[1],
-                countryCol = row[2],
-                languagesCol = row[3];
+        var settings;
+        for (var i = 0; i < regionSettings.length; i++) {
+            var row = regionSettings[i],
+                idCol = row[0],
+                codeCol = row[1],
+                nameCol = row[2],
+                domainCol = row[3];
             if (codeCol == countrycode) {
                 Logger.log('Выбрана страна: ' + countryCol);
                 if (languagesCol.indexOf(langcode) != -1) {
@@ -34,298 +70,280 @@ function main() {
         return settings;
     }
 
+    function allRegionsIds() {
+        var idsList = [];
+        for (var i = 0; i < regionSettings.length; i++) {
+            var row = regionSettings[i],
+                idCol = row[0];
+            idsList[idsList.length] = idCol;
+        }
+        return idsList;
+    }
+
     function regionGoogle() {
         var arr = [
-            ['AFG', 'google.com.af', 'Afghanistan', ['fa', 'ps']], // Farsi, Pushto
-            ['DZA', 'google.dz', 'Algeria', ['fr', 'ar']], // French, Arabic
-            ['ASM', 'google.as', 'American Samoa', ['en']], // English
-            ['AND', 'gooagle.ad', 'Andorra', ['ca']], // Catalan
-            ['AGO', 'google.co.ao', 'Angola', ['pt', 'kg']], // Portuguese, Kongo
-            ['AIA', 'google.com.ai', 'Anguilla', ['en']], // English
-            ['ATG', 'google.com.ag', 'Antigua and Barbuda', ['en']], // English
-            ['ARG', 'google.com.ar', 'Argentina', ['es']], // Español (Latinoamérica)
-            ['ARM', 'google.am', 'Armenia', ['hy']], // Armenian
-            ['AUS', 'google.com.au', 'Australia', ['en']], // English
-            ['AUT', 'google.at', 'Austria', ['de']], // German
-            ['AZE', 'google.az', 'Azerbaijan', ['az, ru']], // Azerbaijani, Russian
-            ['BHS', 'google.bs', 'Bahamas', ['en']], // English
-            ['BHR', 'google.com.bh', 'Bahrain', ['ar']], // Arabic
-            ['BGD', 'google.com.bd', 'Bangladesh', ['bn']], // Bengali
-            ['BLR', 'google.by', 'Belarus', ['be', 'ru']], // Belarusian, Russian
-            ['BEL', 'google.be', 'Belgium', ['nl', 'fr']], // Dutch, French
-            ['BLZ', 'google.com.bz', 'Belize', ['es', 'en']], // Español (Latinoamérica), English
-            ['BEN', 'google.bj', 'Benin', ['fr', 'yo']], // French, Yoruba
-            ['BOL', 'google.com.bo', 'Bolivia', ['es', 'qu']], // Español (Latinoamérica), Quechua
-            ['BIH', 'google.ba', 'Bosnia and Herzegovina', ['bs', 'sr']], // Bosnian, Serbian
-            ['BWA', 'google.co.bw', 'Botswana', ['tn']], // Tswana
-            ['BRA', 'google.com.br', 'Brazil', ['pt']], // Portuguese (Brasil)
-            ['BRN', 'google.com.bn', 'Brunei Darussalam', ['ms', 'cn']], // Malay, Chinese
-            ['BGR', 'google.bg', 'Bulgaria', ['bg']], // Bulgarian
-            ['BFA', 'google.bf', 'Burkina Faso', ['fr']], // French
-            ['BDI', 'google.bi', 'Burundi', ['fr', 'sw']], // French, Swahili
-            ['KHM', 'google.com.kh', 'Cambodia', ['km']], // Khmer
-            ['CMR', 'google.cm', 'Cameroon', ['fr']], // French
-            ['CAN', 'google.ca', 'Canada', ['en', 'fr']], // English, French
-            ['CPV', 'google.cv', 'Cape Verde', ['pt']], // Portuguese
-            ['CAF', 'google.cf', 'Central African Republic', ['fr']], // French
-            ['TCD', 'google.td', 'Chad', ['fr', 'ar']], // French, Arabic
-            ['CHL', 'google.cl', 'Chile', ['es']], // Español (Latinoamérica)
-            ['CHN', 'google.cn', '* China(Google.hk)', ['zh']], //  Chinese
-            ['COL', 'google.com.co', 'Colombia', ['es']], // Español (Latinoamérica)
-            ['COG', 'google.cg', 'Congo', ['fr']], // French
-            ['COD', 'google.cd', 'Congo, The Democratic Republic of the', ['fr', 'sw']], // French, Swahili
-            ['COK', 'google.co.ck', 'Cook Islands', ['en']], // English
-            ['CRI', 'google.co.cr', 'Costa Rica', ['es']], // Español (Latinoamérica)
-            ['CIV', 'google.ci', 'Cote d `Ivoire', ['fr']], // French
-            ['HRV', 'google.hr', 'Croatia', ['hr']], // Croatian
-            ['CUB', 'google.com.cu', 'Cuba', ['es']], // Español (Latinoamérica)
-            ['CYP', 'google.com.cy', 'Cyprus', ['en', 'el']], // English, Greek
-            ['CZE', 'google.cz', 'Czech Republic', ['cs']], // Czech
-            ['DNK', 'google.dk', 'Denmark', ['da', 'fo']], // Danish, Faroese
-            ['DJI', 'google.dj', 'Djibouti', ['fr', 'ar']], // French, Arabic
-            ['DMA', 'google.dm', 'Dominica', ['en']], // English
-            ['DOM', 'google.com.do', 'Dominican Republic', ['es']], // Español (Latinoamérica)
-            ['ECU', 'google.com.ec', 'Ecuador', ['es']], // Español (Latinoamérica)
-            ['EGY', 'google.com.eg', 'Egypt', ['ar']], // Arabic
-            ['SLV', 'google.com.sv', 'El Salvador', ['es']], // Español (Latinoamérica)
-            ['EST', 'google.ee', 'Estonia', ['et', 'ru']], // Estonian, Russian
-            ['ETH', 'google.com.et', 'Ethiopia', ['am', 'ti']], // Amharic, Tigrinya
-            ['FJI', 'google.com.fj', 'Fiji', ['en']], // English
-            ['FIN', 'google.fi', 'Finland', ['fi', 'sv']], // Finnish, Swedish
-            ['FSM', 'google.fm', 'Micronesia', ['en']], // English
-            ['FRA', 'google.fr', 'France', ['fr']], // French
-            ['GAB', 'google.ga', 'Gabon', ['fr']], // French
-            ['GMB', 'google.gm', 'Gambia', ['en', 'wo']], // English, Wolof
-            ['GEO', 'google.ge', 'Georgia', ['ka']], // Georgian
-            ['DEU', 'google.de', 'Germany', ['de']], // German
-            ['GHA', 'google.com.gh', 'Ghana', ['en', 'ha']], // English, Hausa
-            ['GIB', 'google.com.gi', 'Gibraltar', ['en', 'es']], // English, Spanish
-            ['GRC', 'google.gr', 'Greece', ['el']], // Greek
-            ['GRL', 'google.gl', 'Greenland', ['da']], // Danish
-            ['GLP', 'google.gp', 'Guadeloupe', ['fr']], // French
-            ['GTM', 'google.com.gt', 'Guatemala', ['es']], // Español (Latinoamérica)
-            ['GGY', 'google.gg', 'Guernsey', ['en', 'fr']], // English, French
-            ['GUY', 'google.gy', 'Guyana', ['en']], // English
-            ['HTI', 'google.ht', 'Haiti', ['fr', 'ht']], // French, Haitian
-            ['HND', 'google.hn', 'Honduras', ['es']], // Español (Latinoamérica)
-            ['HKG', 'google.com.hk', 'Hong Kong', ['zh']], // Chinese(Traditional)
-            ['HUN', 'google.hu', 'Hungary', ['hu']], // Hungarian
-            ['ISL', 'google.is', 'Iceland', ['is']], // Icelandic
-            ['IND', 'google.co.in', 'India', ['en', 'hi']], // English, Hindi
-            ['IDN', 'google.co.id', 'Indonesia', ['id', 'jw']], // Indonesian, Basa Jawa
-            ['IRQ', 'google.iq', 'Iraq', ['ckb', 'ar']], // Kurdish, Arabic
-            ['IRL', 'google.ie', 'Ireland', ['en', 'ga']], // English, Irish
-            ['IMN', 'google.im', 'Isle of Man', ['en']], // English
-            ['ISR', 'google.co.il', 'Israel', ['ar', 'iw']], // Arabic, Hebrew
-            ['ITA', 'google.it', 'Italy', ['it']], // Italian
-            ['JAM', 'google.com.jm', 'Jamaica', ['en']], // English
-            ['JPN', 'google.co.jp', 'Japan', ['ja']], // Japanese
-            ['JEY', 'google.je', 'Jersey', ['fr', 'em']], // French, English
-            ['JOR', 'google.jo', 'Jordan', ['ar']], // Arabic
-            ['KAZ', 'google.kz', 'Kazakhstan', ['kk', 'ru']], // Kazakh, Russian
-            ['KEN', 'google.co.ke', 'Kenya', ['sw']], // Swahili
-            ['KIR', 'google.ki', 'Kiribati', ['en']], // English
-            ['KOR', 'google.co.kr', 'Korea, Republic of', ['ko']], // Korean
-            ['KWT', 'google.com.kw', 'Kuwait', ['ar']], // Arabic
-            ['KGZ', 'google.kg', 'Kyrgyzstan', ['ky', 'ru']], // Kyrgyz, Russian
-            ['LAO', 'google.la', 'Lao People`s Democratic Republic', ['lo']], // Lao
-            ['LVA', 'google.lv', 'Latvia', ['lv', 'lt']], // Latvian, Lithuanian
-            ['LBN', 'google.com.lb', 'Lebanon', ['ar', 'fr']], // Arabic, French
-            ['LSO', 'google.co.ls', 'Lesotho', ['st', 'en']], // Southern Sotho, English
-            ['LBY', 'google.com.ly', 'Libya', ['ar', 'it']], // Arabic, Italian
-            ['LIE', 'google.li', 'Liechtenstein', [' de']], // German
-            ['LTU', 'google.lt', 'Lithuania', ['lt']], // Lithuanian
-            ['LUX', 'google.lu', 'Luxembourg', ['de', 'fr']], // German, French
-            ['MKD', 'google.mk', 'Macedonia, The Former Yugoslav Republic of', ['mk']], // Macedonian
-            ['MDG', 'google.mg', 'Madagascar', ['mg', 'fr']], // Malagasy, French
-            ['MWI', 'google.mw', 'Malawi', ['ny']], // Nyanja
-            ['MYS', 'google.com.my', 'Malaysia', ['ms']], // Malay
-            ['MDV', 'google.mv', 'Maldives', ['en']], // English
-            ['MLI', 'google.ml', 'Mali', ['fr']], // French
-            ['MLT', 'google.com.mt', 'Malta', ['mt', 'en']], // Maltese, English
-            ['MUS', 'google.mu', 'Mauritius', ['en', 'fr']], // English, French
-            ['MEX', 'google.com.mx', 'Mexico', ['es']], // Español (Latinoamérica)
-            ['MDA', 'google.md', 'Moldova, Republic of', ['mo', 'ru']], // Moldovan, Russian
-            ['MNG', 'google.mn', 'Mongolia', ['mn']], // Mongolian
-            ['MNE', 'google.me', 'Montenegro', ['sr']], // Serbian
-            ['MSR', 'google.ms', 'Montserrat', ['en']], // English
-            ['MAR', 'google.co.ma', 'Morocco', ['fr', 'ar']], // French, Arabic
-            ['MOZ', 'google.co.mz', 'Mozambique', ['pt', 'sw']], // Portuguese, Swahili
-            ['NAM', 'google.com.na', 'Namibia', ['en', 'ar']], // English, Afrikaans
-            ['NRU', 'google.nr', 'Nauru', ['en']], // English
-            ['NPL', 'google.com.np', 'Nepal', ['ne']], // Nepali
-            ['NLD', 'google.nl', 'Netherlands', ['nl', 'en']], // Dutch, English
-            ['NZL', 'google.co.nz', 'New Zealand', ['en', 'mi']], // English, Māori
-            ['NIC', 'google.com.ni', 'Nicaragua', ['es']], // Español (Latinoamérica)
-            ['NER', 'google.ne', 'Niger', ['fr', 'ha']], // French, Hausa
-            ['NGA', 'google.com.ng', 'Nigeria', ['en', 'ha']], // English, Hausa
-            ['NIU', 'google.nu', 'Niue', ['en']], // English
-            ['NFK', 'google.com.nf', 'Norfolk Island', ['en']], // English
-            ['NOR', 'google.no', 'Norway', ['no', 'nn']], // Norwegian, Norwegian Nynorsk
-            ['OMN', 'google.com.om', 'Oman', ['ar']], // Arabic
-            ['PAK', 'google.com.pk', 'Pakistan', ['en', 'ur']], // English, Urdu
-            ['PSE', 'google.ps', 'Palestine, State of', ['ar']], // Arabic
-            ['PAN', 'google.com.pa', 'Panama', ['es']], // Español (Latinoamérica)
-            ['PRY', 'google.com.py', 'Paraguay', ['es']], // Español (Latinoamérica)
-            ['PER', 'google.com.pe', 'Peru', ['es', 'qu']], // Español (Latinoamérica), Quechua
-            ['PHL', 'google.com.ph', 'Philippines', ['tl']], // Tagalog
-            ['PCN', 'google.pn', 'Pitcairn', ['en']], // English
-            ['POL', 'google.pl', 'Poland', ['pl']], // Polish
-            ['PRT', 'google.pt', 'Portugal', ['pt']], // Portuguese
-            ['PRI', 'google.com.pr', 'Puerto Rico', ['es']], // Español (Latinoamérica)
-            ['QAT', 'google.com.qa', 'Qatar', ['ar']], // Arabic
-            ['ROU', 'google.ro', 'Romania', ['ro', 'hu']], // Romanian, Hungarian
-            ['RUS', 'google.ru', 'Russia', ['ru']], // Russian
-            ['RWA', 'google.rw', 'Rwanda', ['en', 'fr']], // English, French
-            ['SHN', 'google.sh', 'Saint Helena', ['en']], // English
-            ['VCT', 'google.com.vc', 'Saint Vincent and the Grenadines', ['en']], // English
-            ['WSM', 'google.ws', 'Samoa', ['en']], // English
-            ['SMR', 'google.sm', 'San Marino', ['it']], // Italian
-            ['STP', 'google.st', 'Sao Tome and Principe', ['pt']], // Portuguese
-            ['SAU', 'google.com.sa', 'Saudi Arabia', ['ar']], // Arabic
-            ['SEN', 'google.sn', 'Senegal', ['fr', 'wo']], // French, Wolof
-            ['SRB', 'google.rs', 'Serbia', ['sr']], // Serbian
-            ['SYC', 'google.sc', 'Seychelles', ['crs', 'fr']], // Kreol Seselwa, French
-            ['SLE', 'google.com.sl', 'Sierra Leone', ['en', 'kri']], // English, Krio
-            ['SGP', 'google.com.sg', 'Singapore', ['en', 'cn']], // English, Chinese (Simplified)'
-            ['SVK', 'google.sk', 'Slovakia', ['sk']], // Slovak
-            ['SVN', 'google.si', 'Slovenia', ['sl']], // Slovene
-            ['SLB', 'google.com.sb', 'Solomon Islands', ['en']], // English
-            ['SOM', 'google.so', 'Somalia', ['so', 'ar']], // Somali, Arabic
-            ['ZAF', 'google.co.za', 'South Africa', ['af', 'st']], // Afrikaans, Southern Sotho or Sesotho
-            ['ESP', 'google.es', 'Spain', ['es', 'ca']], // Spanish, Catalan
-            ['LKA', 'google.lk', 'Sri Lanka', ['en', 'si']], // English, Sinhalese
-            ['SWE', 'google.se', 'Sweden', ['sv']], // Swedish
-            ['CHE', 'google.ch', 'Switzerland', ['de', 'fr']], // German, French
-            ['TWN', 'google.com.tw', 'Taiwan, Province of China', ['zh']], // Chinese
-            ['TJK', 'google.com.tj', 'Tajikistan', ['tg', 'ru']], // Tajik, Russian
-            ['TZA', 'google.co.tz', 'Tanzania, United Republic of', ['sw']], // Swahili
-            ['THA', 'google.co.th', 'Thailand', ['th']], // Thai
-            ['TLS', 'google.tl', 'Timor-Leste', ['pt']], // Portuguese
-            ['TGO', 'google.tg', 'Togo', ['fr', 'ee']], // French, Ewe
-            ['TKL', 'google.tk', 'Tokelau', ['en']], // English
-            ['TON', 'google.to', 'Tonga', ['en', 'to']], // English, Tonga
-            ['TTO', 'google.tt', 'Trinidad and Tobago', ['en', 'hi']], // English, Hindi
-            ['TUN', 'google.tn', 'Tunisia', ['ar', 'fr']], // Arabic, French
-            ['TUR', 'google.com.tr', 'Turkey', ['tr']], // Turkish
-            ['TKM', 'google.tm', 'Turkmenistan', ['tk', 'ru']], // Turkmen, Russian
-            ['UGA', 'google.co.ug', 'Uganda', ['lg', 'sw']], // Ganda, Swahili
-            ['UKR', 'google.com.ua', 'Ukraine', ['uk', 'ru']], // Ukrainian, Russian
-            ['ARE', 'google.ae', 'United Arab Emirates', ['ar', 'fa']], // Arabic, Persian
-            ['GBR', 'google.co.uk', 'United Kingdom', ['en']], // English
-            ['USA', 'google.com', 'United States', ['en']], // English
-            ['URY', 'google.com.uy', 'Uruguay', ['es']], // Español (Latinoamérica)
-            ['UZB', 'google.co.uz', 'Uzbekistan', ['uz', 'ru']], // Uzbek, Russian
-            ['VUT', 'google.vu', 'Vanuatu', ['en', 'fr']], // English, French
-            ['VEN', 'google.co.ve', 'Venezuela, Bolivarian Republic of', ['es']], // Español (Latinoamérica)
-            ['VNM', 'google.com.vn', 'Viet Nam', ['vi', 'fr']], // Vietnamese, French
-            ['VGB', 'google.vg', 'Virgin Islands, British', ['en']], // English
-            ['VIR', 'google.co.vi', 'Virgin Islands, U.S.', ['en']], // English
-            ['ZMB', 'google.co.zm', 'Zambia', ['en', 'ny']], // English, Nyanja
-            ['ZWE', 'google.co.zw', 'Zimbabwe', ['en', 'sn']], // English, Shona
+            ['2004', 'AF', 'Afghanistan', 'google.com.af'],
+            ['2008', 'AL', 'Albania', '--'],
+            ['2012', 'DZ', 'Algeria', 'google.dz'],
+            ['2016', 'AS', 'American Samoa', 'google.as'],
+            ['2020', 'AD', 'Andorra', 'gooagle.ad'],
+            ['2024', 'AO', 'Angola', 'google.co.ao'],
+            ['2010', 'AQ', 'Antarctica', '--'],
+            ['2028', 'AG', 'Antigua and Barbuda', 'google.com.ag'],
+            ['2032', 'AR', 'Argentina', 'google.com.ar'],
+            ['2051', 'AM', 'Armenia', 'google.am'],
+            ['2036', 'AU', 'Australia', 'google.com.au'],
+            ['2040', 'AT', 'Austria', 'google.at'],
+            ['2031', 'AZ', 'Azerbaijan', 'google.az'],
+            ['2048', 'BH', 'Bahrain', 'google.com.bh'],
+            ['2050', 'BD', 'Bangladesh', 'google.com.bd'],
+            ['2052', 'BB', 'Barbados', '--'],
+            ['2112', 'BY', 'Belarus', 'google.by'],
+            ['2056', 'BE', 'Belgium', 'google.be'],
+            ['2084', 'BZ', 'Belize', 'google.com.bz'],
+            ['2204', 'BJ', 'Benin', 'google.bj'],
+            ['2064', 'BT', 'Bhutan', '--'],
+            ['2068', 'BO', 'Bolivia', 'google.com.bo'],
+            ['2070', 'BA', 'Bosnia and Herzegovina', 'google.ba'],
+            ['2072', 'BW', 'Botswana', 'google.co.bw'],
+            ['2076', 'BR', 'Brazil', 'google.com.br'],
+            ['2096', 'BN', 'Brunei', 'google.com.bn'],
+            ['2100', 'BG', 'Bulgaria', 'google.bg'],
+            ['2854', 'BF', 'Burkina Faso', 'google.bf'],
+            ['2108', 'BI', 'Burundi', 'google.bi'],
+            ['2116', 'KH', 'Cambodia', 'google.com.kh'],
+            ['2120', 'CM', 'Cameroon', 'google.cm'],
+            ['2124', 'CA', 'Canada', 'google.ca'],
+            ['2132', 'CV', 'Cape Verde', 'google.cv'],
+            ['2535', 'BQ', 'Caribbean Netherlands', '--'],
+            ['2140', 'CF', 'Central African Republic', '--'],
+            ['2148', 'TD', 'Chad', '--'],
+            ['2152', 'CL', 'Chile', '--'],
+            ['2156', 'CN', 'China', 'google.com.hk'],
+            ['2162', 'CX', 'Christmas Island', '--'],
+            ['2166', 'CC', 'Cocos (Keeling) Islands', '--'],
+            ['2170', 'CO', 'Colombia', 'google.com.co'],
+            ['2174', 'KM', 'Comoros', '--'],
+            ['2184', 'CK', 'Cook Islands', 'google.co.ck'],
+            ['2188', 'CR', 'Costa Rica', 'google.co.cr'],
+            ['2384', 'CI', 'Cote d`Ivoire ', 'google.ci '],
+            ['2191', 'HR', 'Croatia', 'google.hr'],
+            ['2531', 'CW', 'Curacao', '--'],
+            ['2196', 'CY', 'Cyprus', 'google.com.cy'],
+            ['2203', 'CZ', 'Czechia', 'google.cz'],
+            ['2180', 'CD', 'Democratic Republic of the Congo', 'google.cg'],
+            ['2208', 'DK', 'Denmark', 'google.dk'],
+            ['2262', 'DJ', 'Djibouti', 'google.dj'],
+            ['2212', 'DM', 'Dominica', 'google.dm'],
+            ['2214', 'DO', 'Dominican Republic', 'google.com.do'],
+            ['2218', 'EC', 'Ecuador', 'google.com.ec'],
+            ['2818', 'EG', 'Egypt', 'google.com.eg'],
+            ['2222', 'SV', 'El Salvador', 'google.com.sv'],
+            ['2226', 'GQ', 'Equatorial Guinea', '--'],
+            ['2232', 'ER', 'Eritrea', '--'],
+            ['2233', 'EE', 'Estonia', 'google.ee'],
+            ['2231', 'ET', 'Ethiopia', 'google.com.et'],
+            ['2583', 'FM', 'Federated States of Micronesia', 'google.fm'],
+            ['2242', 'FJ', 'Fiji', 'google.com.fj'],
+            ['2246', 'FI', 'Finland', 'google.fi'],
+            ['2250', 'FR', 'France', 'google.fr'],
+            ['2258', 'PF', 'French Polynesia', '--'],
+            ['2260', 'TF', 'French Southern and Antarctic Lands', '--'],
+            ['2266', 'GA', 'Gabon', 'google.ga'],
+            ['2268', 'GE', 'Georgia', 'google.ge'],
+            ['2276', 'DE', 'Germany', 'google.de'],
+            ['2288', 'GH', 'Ghana', 'google.com.gh'],
+            ['2300', 'GR', 'Greece', 'google.gr'],
+            ['2308', 'GD', 'Grenada', '--'],
+            ['2316', 'GU', 'Guam', '--'],
+            ['2320', 'GT', 'Guatemala', 'google.com.gt'],
+            ['2831', 'GG', 'Guernsey', 'google.gg'],
+            ['2324', 'GN', 'Guinea', '--'],
+            ['2624', 'GW', 'Guinea-Bissau', '--'],
+            ['2328', 'GY', 'Guyana', 'google.gy'],
+            ['2332', 'HT', 'Haiti', 'google.ht'],
+            ['2334', 'HM', 'Heard Island and McDonald Islands', '--'],
+            ['2340', 'HN', 'Honduras', 'google.hn'],
+            ['2348', 'HU', 'Hungary', 'google.hu'],
+            ['2352', 'IS', 'Iceland', 'google.is'],
+            ['2356', 'IN', 'India', 'google.co.in'],
+            ['2360', 'ID', 'Indonesia', 'google.co.id'],
+            ['2368', 'IQ', 'Iraq', 'google.iq'],
+            ['2372', 'IE', 'Ireland', 'google.ie'],
+            ['2376', 'IL', 'Israel', 'google.co.il'],
+            ['2380', 'IT', 'Italy', 'google.it'],
+            ['2388', 'JM', 'Jamaica', 'google.com.jm'],
+            ['2392', 'JP', 'Japan', 'google.co.jp'],
+            ['2832', 'JE', 'Jersey', 'google.je'],
+            ['2400', 'JO', 'Jordan', 'google.jo'],
+            ['2398', 'KZ', 'Kazakhstan', 'google.kz'],
+            ['2404', 'KE', 'Kenya', 'google.co.ke'],
+            ['2296', 'KI', 'Kiribati', 'google.ki'],
+            ['2414', 'KW', 'Kuwait', 'google.com.kw'],
+            ['2417', 'KG', 'Kyrgyzstan', 'google.kg'],
+            ['2418', 'LA', 'Laos', 'google.la'],
+            ['2428', 'LV', 'Latvia', 'google.lv'],
+            ['2422', 'LB', 'Lebanon', 'google.com.lb'],
+            ['2426', 'LS', 'Lesotho', 'google.co.ls'],
+            ['2430', 'LR', 'Liberia', '--'],
+            ['2434', 'LY', 'Libya', 'google.com.ly'],
+            ['2438', 'LI', 'Liechtenstein', 'google.li'],
+            ['2440', 'LT', 'Lithuania', 'google.lt'],
+            ['2442', 'LU', 'Luxembourg', 'google.lu'],
+            ['2807', 'MK', 'Macedonia (FYROM)', 'google.mk'],
+            ['2450', 'MG', 'Madagascar', 'google.mg'],
+            ['2454', 'MW', 'Malawi', 'google.mw'],
+            ['2458', 'MY', 'Malaysia', 'google.com.my'],
+            ['2462', 'MV', 'Maldives', 'google.mv'],
+            ['2466', 'ML', 'Mali', 'google.ml'],
+            ['2470', 'MT', 'Malta', 'google.com.mt'],
+            ['2584', 'MH', 'Marshall Islands', '--'],
+            ['2478', 'MR', 'Mauritania', '--'],
+            ['2480', 'MU', 'Mauritius', 'google.mu'],
+            ['2484', 'MX', 'Mexico', 'google.com.mx'],
+            ['2498', 'MD', 'Moldova', 'google.md'],
+            ['2492', 'MC', 'Monaco', '--'],
+            ['2496', 'MN', 'Mongolia', 'google.mn'],
+            ['2499', 'ME', 'Montenegro', 'google.me'],
+            ['2504', 'MA', 'Morocco', 'google.co.ma'],
+            ['2508', 'MZ', 'Mozambique', 'google.co.mz'],
+            ['2104', 'MM', 'Myanmar (Burma)', 'google.com.mm'],
+            ['2516', 'NA', 'Namibia', 'google.com.na'],
+            ['2520', 'NR', 'Nauru', 'google.nr'],
+            ['2524', 'NP', 'Nepal', 'google.com.np'],
+            ['2528', 'NL', 'Netherlands', 'google.nl'],
+            ['2540', 'NC', 'New Caledonia', '--'],
+            ['2554', 'NZ', 'New Zealand', 'google.co.nz'],
+            ['2558', 'NI', 'Nicaragua', 'google.com.ni'],
+            ['2562', 'NE', 'Niger', 'google.ne'],
+            ['2566', 'NG', 'Nigeria', 'google.com.ng'],
+            ['2570', 'NU', 'Niue', 'google.nu'],
+            ['2574', 'NF', 'Norfolk Island', 'google.com.nf'],
+            ['2580', 'MP', 'Northern Mariana Islands', '--'],
+            ['2578', 'NO', 'Norway', 'google.no'],
+            ['2512', 'OM', 'Oman', 'google.com.om'],
+            ['2586', 'PK', 'Pakistan', 'google.com.pk'],
+            ['2585', 'PW', 'Palau', '--'],
+            ['2591', 'PA', 'Panama', 'google.com.pa'],
+            ['2598', 'PG', 'Papua New Guinea', '--'],
+            ['2600', 'PY', 'Paraguay', 'google.com.py'],
+            ['2604', 'PE', 'Peru', 'google.com.pe'],
+            ['2608', 'PH', 'Philippines', 'google.com.ph'],
+            ['2612', 'PN', 'Pitcairn Islands', 'google.pn'],
+            ['2616', 'PL', 'Poland', 'google.pl'],
+            ['2620', 'PT', 'Portugal', 'google.pt'],
+            ['2634', 'QA', 'Qatar', 'google.com.qa'],
+            ['2178', 'CG', 'Republic of the Congo', '--'],
+            ['2642', 'RO', 'Romania', 'google.ro'],
+            ['2643', 'RU', 'Russia', 'google.ru'],
+            ['2646', 'RW', 'Rwanda', 'google.rw'],
+            ['2654', 'SH', 'Saint Helena, Ascension and Tristan da Cunha', 'google.sh'],
+            ['2659', 'KN', 'Saint Kitts and Nevis', '--'],
+            ['2662', 'LC', 'Saint Lucia', '--'],
+            ['2666', 'PM', 'Saint Pierre and Miquelon', '--'],
+            ['2670', 'VC', 'Saint Vincent and the Grenadines', 'google.com.vc'],
+            ['2882', 'WS', 'Samoa', 'google.ws'],
+            ['2674', 'SM', 'San Marino', 'google.sm'],
+            ['2678', 'ST', 'Sao Tome and Principe', 'google.st'],
+            ['2682', 'SA', 'Saudi Arabia', 'google.com.sa'],
+            ['2686', 'SN', 'Senegal', 'google.sn'],
+            ['2688', 'RS', 'Serbia', 'google.rs'],
+            ['2690', 'SC', 'Seychelles', 'google.sc'],
+            ['2694', 'SL', 'Sierra Leone', 'google.com.sl'],
+            ['2702', 'SG', 'Singapore', 'google.com.sg'],
+            ['2534', 'SX', 'Sint Maarten', '--'],
+            ['2703', 'SK', 'Slovakia', 'google.sk'],
+            ['2705', 'SI', 'Slovenia', 'google.si'],
+            ['2090', 'SB', 'Solomon Islands', 'google.com.sb'],
+            ['2706', 'SO', 'Somalia', 'google.so'],
+            ['2710', 'ZA', 'South Africa', 'google.co.za'],
+            ['2239', 'GS', 'South Georgia and the South Sandwich Islands', '--'],
+            ['2410', 'KR', 'South Korea', '--'],
+            ['2724', 'ES', 'Spain', 'google.es'],
+            ['2144', 'LK', 'Sri Lanka', 'google.lk'],
+            ['2740', 'SR', 'Suriname', '--'],
+            ['2748', 'SZ', 'Swaziland', '--'],
+            ['2752', 'SE', 'Sweden', 'google.se'],
+            ['2756', 'CH', 'Switzerland', 'google.ch'],
+            ['2762', 'TJ', 'Tajikistan', 'google.com.tj'],
+            ['2834', 'TZ', 'Tanzania', 'google.co.tz'],
+            ['2764', 'TH', 'Thailand', 'google.co.th'],
+            ['2044', 'BS', 'The Bahamas', 'google.bs'],
+            ['2270', 'GM', 'The Gambia', 'google.gm'],
+            ['2626', 'TL', 'Timor-Leste', 'google.tl'],
+            ['2768', 'TG', 'Togo', 'google.tg'],
+            ['2772', 'TK', 'Tokelau', 'google.tk'],
+            ['2776', 'TO', 'Tonga', 'google.to'],
+            ['2780', 'TT', 'Trinidad and Tobago', 'google.tt'],
+            ['2788', 'TN', 'Tunisia', 'google.tn'],
+            ['2792', 'TR', 'Turkey', 'google.com.tr'],
+            ['2795', 'TM', 'Turkmenistan', 'google.tm'],
+            ['2798', 'TV', 'Tuvalu', '--'],
+            ['2800', 'UG', 'Uganda', 'google.co.ug'],
+            ['2804', 'UA', 'Ukraine', 'google.com.ua'],
+            ['2784', 'AE', 'United Arab Emirates', 'google.ae'],
+            ['2826', 'GB', 'United Kingdom', 'google.co.uk'],
+            ['2840', 'US', 'United States', 'google.com'],
+            ['2581', 'UM', 'United States Minor Outlying Islands', '--'],
+            ['2858', 'UY', 'Uruguay', 'google.com.uy'],
+            ['2860', 'UZ', 'Uzbekistan', 'google.co.uz'],
+            ['2548', 'VU', 'Vanuatu', 'google.vu'],
+            ['2336', 'VA', 'Vatican City', '--'],
+            ['2862', 'VE', 'Venezuela', 'google.co.ve'],
+            ['2704', 'VN', 'Vietnam', 'google.com.vn'],
+            ['2876', 'WF', 'Wallis and Futuna', '--'],
+            ['2887', 'YE', 'Yemen', '--'],
+            ['2894', 'ZM', 'Zambia', 'google.co.zm'],
+            ['2716', 'ZW', 'Zimbabwe', 'google.co.zw'],
         ];
         return arr;
     }
 
     function alphabet(lang) {
         var arr = {
-            /*af - Afrikaans
-            am - Amharic
-            ar - Arabic
-            bg - Bulgarian
-            bn - Bengali
-            bs - Bosnian
-            ca - Catalan; Valencian
-            crs - Kreol Seselwa
-            cs - Czech
-            de - German
-            ee - Ewe
-            es - Español (Latinoamérica)
-            es - Spanish; Castilian
-            et - Estonian
-            fa - Persian
-            fo - Faroese
-            fr - French
-            ga - Irish
-            ha - Hausa
-            hi - Hindi
-            hr - Croatian
-            ht - Haitian; Haitian Creole or Kreyòl Ayisyen
-            hu - Hungarian
-            hy - Armenian
-            in - Lingala
-            is - Icelandic
-            it - Italian
-            iw - Hebrew
-            ja - Japanese
-            jw - Basa Jawa
-            ka - Georgian
-            kg - Kongo
-            kk - Kazakh
-            km - Khmer
-            ko - Korean
-            kri - Krio
-            ky - Kyrgyz
-            lg - Ganda
-            lo - Lao
-            lt - Lithuanian
-            lv - Latvian
-            mg - Malagasy
-            mi - Māori
-            mk - Macedonian
-            mn - Mongolian
-            mo - Moldovan
-            mt - Maltese
-            ne - Nepali
-            nl - Dutch
-            nn - Norwegian Nynorsk
-            no - Norwegian
-            ny - Chichewa; Chewa; Nyanja
-            pl - Polish
-            ps - Pashto, Pushto
-            pt-BR - Portuguese (Brasil)
-            pt-PT - Portuguese
-            qu - Quechua
-            ro - Romanian, Moldavian, Moldovan
-            si - Sinhala, Sinhalese
-            sk - Slovak
-            sl - Slovene
-            sn - Shona
-            so - Somali
-            sr - Serbian
-            sr-ME - Montenegro - Serbian (Latin)
-            st - Southern Sotho
-            st - Southern Sotho or Sesotho
-            sv - Swedish
-            sw - Swahili
-            sw - Swahili or Kiswahilior Kiswahili
-            tg - Tajik
-            th - Thai
-            ti - Tigrinya
-            tk - Turkmen
-            tl - Tagalog
-            tn - Tswana
-            to - Tonga (Tonga Islands)
-            tr - Turkish
-            uk - Ukrainian
-            ur - Urdu
-            wo - Wolof
-            yo - Yoruba
-            zh - Chinese
-            zh-CN - Chinese (Simplified Han)
-            zh-TW - Chinese (Traditional Han)*/
-            az: ['a', 'b', 'c', 'ç', 'd', 'e', 'ə', 'f', 'g', 'ğ', 'h', 'x', 'ı', 'i', 'j', 'k', 'q', 'l', 'm', 'n', 'o', 'ö', 'p', 'r', 's', 'ş', 't', 'u', 'ü', 'v', 'y', 'z'], // Azerbaijani
-            ckb: ['a', 'b', 'c', 'ç', 'd', 'e', 'ê', 'f', 'g', 'h', 'i', 'î', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 'ş', 't', 'u', 'û', 'v', 'w', 'x', 'y', 'z'], // Kurdish
-            be: ['a', 'b', 'c', 'ć', 'č', 'd', 'e', 'ě', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'ľ', 'm', 'n', 'ň', 'o', 'p', 'r', 's', 'ś', 'š', 't', 'u', 'ŭ', 'y', 'z', 'ź', 'ž'], // Belarusian
-            da: ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'æ', 'ø', 'å'], // Danish
-            el: ['α', 'β', 'γ', 'δ', 'ε', 'ζ', 'η', 'θ', 'ι', 'κ', 'λ', 'μ', 'ν', 'ξ', 'ο', 'π', 'ρ', 'σ', 'ς', 'τ', 'υ', 'φ', 'χ', 'ψ', 'ω'], // Greek
-            en: ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'], // English
-            fi: ['a', 'ä', 'å', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'ö', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'], // Finnish
-            id: ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'], // Indonesian
-            ms: ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'], // Malay
-            ru: ['а', 'б', 'в', 'г', 'д', 'е', 'ё', 'ж', 'з', 'и', 'й', 'к', 'л', 'м', 'н', 'о', 'п', 'р', 'с', 'т', 'у', 'ф', 'х', 'ц', 'ч', 'ш', 'щ', 'ъ', 'ы', 'ь', 'э', 'ю', 'я'], // Russian
-            vi: ['a', 'ă', 'â', 'b', 'c', 'd', 'đ', 'e', 'ê', 'g', 'h', 'i', 'k', 'l', 'm', 'n', 'o', 'ô', 'ơ', 'p', 'q', 'r', 's', 't', 'u', 'ư', 'v', 'x', 'y'], // Vietnamese
-            uz: ['а', 'b', 'd', 'е', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'о', 'p', 'q', 'r', 's', 't', 'u', 'v', 'x', 'y', 'z', 'oʻ', 'gʻ', 'sh', 'ch', 'ng'] // Uzbek
+            ['Arabic', 'ar', 1019, ['أ', 'ب', 'ت', 'ث', 'ج', 'ح', 'خ', 'د', 'ذ', 'ر', 'ز', 'س', 'ش', 'ص', 'ض', 'ط', 'ظ', 'ع', 'ف', 'ق', 'ك', 'ل', 'م', 'ن', 'و', 'ي', 'ﻩ', 'غ']], // Arabic
+            ['Bulgarian', 'bg', 1020, ['а', 'б', 'в', 'г', 'д', 'е', 'ж', 'з', 'и', 'й', 'к', 'л', 'м', 'н', 'о', 'п', 'р', 'с', 'т', 'у', 'ф', 'х', 'ц', 'ч', 'ш', 'щ', 'ъ', 'ь', 'ю', 'я']], // Bulgarian
+            ['Catalan', 'ca', 1038, ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'à', 'ç', 'è', 'é', 'í', 'ï', 'ò', 'ó', 'ú', 'ü']], // Catalan
+            ['Chinese (simplified)', 'zh_CN', 1017, []], // Chinese(simplified), reserved
+            ['Chinese (traditional)', 'zh_TW', 1018, []], // Chinese(traditional), reserved
+            ['Croatian', 'hr', 1039, ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'r', 's', 't', 'u', 'v', 'z', 'ć', 'č', 'đ', 'š', 'ž', 'ǆ', 'ǉ', 'ǌ']], // Croatian
+            ['Czech', 'cs', 1021, ['a', 'b', 'c', 'ch', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'á', 'é', 'í', 'ó', 'ú', 'ý', 'č', 'ď', 'ě', 'ň', 'ř', 'š', 'ť', 'ů', 'ž']], // Czech
+            ['Danish', 'da', 1009, ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'æ', 'ø', 'å']], // Danish
+            ['Dutch', 'nl', 1010, ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']], // Dutch
+            ['English', 'en', 1000, ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']], // English
+            ['Estonian', 'et', 1043, ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'ä', 'õ', 'ö', 'ü', 'š', 'ž']], // Estonian
+            ['Filipino', 'tl', 1042, ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'ng', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'ñ']], // Filipino
+            ['Finnish', 'fi', 1011, ['a', 'ä', 'å', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'ö', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']], // Finnish
+            ['French', 'fr', 1002, ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'à', 'â', 'æ', 'ç', 'è', 'é', 'ê', 'ë', 'î', 'ï', 'ô', 'ù', 'û', 'ü', 'ÿ', 'œ']], // French
+            ['German', 'de', 1001, ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'ß', 'ä', 'ö', 'ü']], // German
+            ['Greek', 'el', 1022, ['α', 'β', 'γ', 'δ', 'ε', 'ζ', 'η', 'θ', 'ι', 'κ', 'λ', 'μ', 'ν', 'ξ', 'ο', 'π', 'ρ', 'σ', 'ς', 'τ', 'υ', 'φ', 'χ', 'ψ', 'ω']], // Greek
+            ['Hebrew', 'iw', 1027, ['א', 'אֽ', 'אֿ', 'ב', 'ג', 'ד', 'ה', 'ו', 'וֹ', 'וּ', 'ז', 'ח', 'ט', 'י', 'ך', 'כ', 'ל', 'ם', 'מ', 'ן', 'נ', 'ס', 'ע', 'ף', 'פ', 'פּ', 'ץ', 'צ', 'ק', 'ר', 'ש', 'שׁ', 'שׂ', 'ת', 'תּ']], // Hebrew
+            ['Hindi', 'hi', 1023, ['अ', 'आ', 'इ', 'ई', 'उ', 'ऊ', 'ऋ', 'ऌ', 'ऍ', 'ऎ', 'ए', 'ऐ', 'ऑ', 'ऒ', 'ओ', 'औ', 'क', 'ख', 'ग', 'घ', 'ङ', 'च', 'छ', 'ज', 'झ', 'ञ', 'ट', 'ठ', 'ड', 'ढ', 'ण', 'त', 'थ', 'द', 'ध', 'न', 'ऩ', 'प', 'फ', 'ब', 'भ', 'म', 'य', 'र', 'ऱ', 'ल', 'ळ', 'ऴ', 'व', 'श', 'ष', 'स', 'ह', 'ॐ', 'क़', 'ख़', 'ग़', 'ज़', 'ड़', 'ढ़', 'फ़', 'य़', 'ॠ', 'ॡ']], // Hindi
+            ['Hungarian', 'hu', 1024, ['A', 'B', 'C', 'Cs', 'D', 'Dz', 'Dzs', 'E', 'F', 'G', 'Gy', 'H', 'I', 'J', 'K', 'L', 'Ly', 'M', 'N', 'Ny', 'O', 'P', 'Q', 'R', 'S', 'Sz', 'T', 'Ty', 'U', 'V', 'W', 'X', 'Y', 'Z', 'Zs', 'Á', 'É', 'Ë', 'Í', 'Ó', 'Ö', 'Ú', 'Ü', 'Ő', 'Ű']], // Hungarian
+            ['Icelandic', 'is', 1026, ['a', 'b', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'r', 's', 't', 'u', 'v', 'x', 'y', 'z', 'á', 'æ', 'é', 'í', 'ð', 'ó', 'ö', 'ú', 'ý', 'þ']], // Icelandic
+            ['Indonesian', 'id', 1025, ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']], // Indonesian
+            ['Italian', 'it', 1004, ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'z', 'à', 'è', 'é', 'ì', 'í', 'î', 'ò', 'ó', 'ù', 'ú']], // Italian
+            ['Japanese', 'ja', 1005, ['あ', 'い', 'う', 'え', 'お', 'か', 'き', 'く', 'け', 'こ', 'さ', 'し', 'す', 'せ', 'そ', 'た', 'ち', 'つ', 'て', 'と', 'な', 'に', 'ぬ', 'ね', 'の', 'は', 'ひ', 'ふ', 'へ', 'ほ', 'ま', 'み', 'む', 'め', 'も', 'や', 'ゆ', 'よ', 'ら', 'り', 'る', 'れ', 'ろ', 'わ', 'ゐ', 'ゑ', 'を', 'ん']], // Japanese
+            ['Korean', 'ko', 1012, ['ㄱ', 'ㄲ', 'ㄴ', 'ㄷ', 'ㄸ', 'ㄹ', 'ㅁ', 'ㅂ', 'ㅃ', 'ㅅ', 'ㅆ', 'ㅇ', 'ㅈ', 'ㅉ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ', 'ㅏ', 'ㅐ', 'ㅑ', 'ㅒ', 'ㅓ', 'ㅔ', 'ㅕ', 'ㅖ', 'ㅗ', 'ㅘ', 'ㅙ', 'ㅚ', 'ㅛ', 'ㅜ', 'ㅝ', 'ㅞ', 'ㅟ', 'ㅠ', 'ㅡ', 'ㅢ', 'ㅣ']], // Korean
+            ['Latvian', 'lv', 1028, ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'r', 's', 't', 'u', 'v', 'z', 'ā', 'č', 'ē', 'ģ', 'ī', 'ķ', 'ļ', 'ņ', 'š', 'ū', 'ž']], // Latvian
+            ['Lithuanian', 'lt', 1029, ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'r', 's', 't', 'u', 'v', 'y', 'z', 'ą', 'č', 'ė', 'ę', 'į', 'š', 'ū', 'ų', 'ž']], // Lithuanian
+            ['Malay', 'ms', 1102, ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']], // Malay
+            ['Norwegian', 'no', 1013, ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'å', 'æ', 'ø']], // Norwegian
+            ['Persian', 'fa', 1064, ['ء', 'آ', 'أ', 'ئـ', 'ا', 'ب', 'بـ', 'ت', 'تـ', 'ث', 'ثـ', 'ج', 'جـ', 'ح', 'حـ', 'خ', 'خـ', 'د', 'ذ', 'ر', 'ز', 'س', 'سـ', 'ش', 'شـ', 'ص', 'صـ', 'ض', 'ضـ', 'ط', 'طـ', 'ظ', 'ظـ', 'ع', 'عـ', 'غ', 'غـ', 'ـأ', 'ـؤ', 'ـئ', 'ـئـ', 'ـا', 'ـب', 'ـبـ', 'ـت', 'ـتـ', 'ـث', 'ـثـ', 'ـج', 'ـجـ', 'ـح', 'ـحـ', 'ـخ', 'ـخـ', 'ـد', 'ـذ', 'ـر', 'ـز', 'ـس', 'ـسـ', 'ـش', 'ـشـ', 'ـص', 'ـصـ', 'ـض', 'ـضـ', 'ـط', 'ـطـ', 'ـظ', 'ـظـ', 'ـع', 'ـعـ', 'ـغ', 'ـغـ', 'ـف', 'ـفـ', 'ـق', 'ـقـ', 'ـل', 'ـلـ', 'ـم', 'ـمـ', 'ـن', 'ـنـ', 'ه', 'ـهـ', 'ـو', 'ـپ', 'ـپـ', 'ـچ', 'ـچـ', 'ـژ', 'ـک', 'ـکـ', 'ـگ', 'ـگـ', 'ـی', 'ـیـ', 'ف', 'فـ', 'ق', 'قـ', 'ل', 'لـ', 'م', 'مـ', 'ن', 'نـ', 'ه', 'هـ', 'و', 'پ', 'پـ', 'چ', 'چـ', 'ژ', 'ک', 'کـ', 'گ', 'گـ', 'ی', 'یـ']], // Persian
+            ['Polish', 'pl', 1030, ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'ó', 'ą', 'ć', 'ę', 'ł', 'ń', 'ś', 'ź', 'ż']], // Polish
+            ['Portuguese', 'pt', 1014, ['a', 'b', 'c', 'ch', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'ç']], // Portuguese
+            ['Romanian', 'ro', 1032, ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'â', 'î', 'ă', 'ș', 'ț']], // Romanian
+            ['Russian', 'ru', 1031, ['а', 'б', 'в', 'г', 'д', 'е', 'ё', 'ж', 'з', 'и', 'й', 'к', 'л', 'м', 'н', 'о', 'п', 'р', 'с', 'т', 'у', 'ф', 'х', 'ц', 'ч', 'ш', 'щ', 'ъ', 'ы', 'ь', 'э', 'ю', 'я']], // Russian
+            ['Serbian', 'sr', 1035, ['а', 'б', 'в', 'г', 'д', 'е', 'ж', 'з', 'и', 'к', 'л', 'м', 'н', 'о', 'п', 'р', 'с', 'т', 'у', 'ф', 'х', 'ц', 'ч', 'ш', 'ђ', 'ј', 'љ', 'њ', 'ћ', 'џ']], // Serbian
+            ['Slovak', 'sk', 1033, ['a', 'b', 'c', 'ch', 'd', 'dz', 'dž', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'á', 'ä', 'é', 'í', 'ó', 'ô', 'ú', 'ý', 'č', 'ď', 'ĺ', 'ľ', 'ň', 'ŕ', 'š', 'ť', 'ž']], // Slovak
+            ['Slovenian', 'sl', 1034, ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'r', 's', 't', 'u', 'v', 'z', 'č', 'š', 'ž']], // Slovenian
+            ['Spanish', 'es', 1003, ['a', 'b', 'c', 'ch', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'll', 'm', 'n', 'o', 'p', 'q', 'r', 'rr', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'ñ']], // Spanish
+            ['Swedish', 'sv', 1015, ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'ä', 'å', 'ö', 'š', 'ž']], // Swedish
+            ['Thai', 'th', 1044, ['ก', 'ข', 'ฃ', 'ค', 'ฅ', 'ฆ', 'ง', 'จ', 'ฉ', 'ช', 'ซ', 'ฌ', 'ญ', 'ฎ', 'ฏ', 'ฐ', 'ฑ', 'ฒ', 'ณ', 'ด', 'ต', 'ถ', 'ท', 'ธ', 'น', 'บ', 'ป', 'ผ', 'ฝ', 'พ', 'ฟ', 'ภ', 'ม', 'ย', 'ร', 'ฤ', 'ฤๅ', 'ล', 'ฦ', 'ว', 'ศ', 'ษ', 'ส', 'ห', 'ฬ', 'อ', 'อิ', 'อี', 'อุ', 'อู', 'ฮ', 'ะ', 'า', 'ึๅ', 'เ', 'โ']], // Thai
+            ['Turkish', 'tr', 1037, ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'r', 's', 't', 'u', 'v', 'y', 'z', 'ç', 'ö', 'ü', 'ğ', 'ı', 'ş']], // Turkish
+            ['Ukrainian', 'uk', 1036, ['є', 'і', 'ї', 'а', 'б', 'в', 'г', 'д', 'е', 'ж', 'з', 'и', 'й', 'к', 'л', 'м', 'н', 'о', 'п', 'р', 'с', 'т', 'у', 'ф', 'х', 'ц', 'ч', 'ш', 'щ', 'ь', 'ю', 'я', 'ґ']], // Ukrainian
+            ['Urdu', 'ur', 1041, ['ء', 'ا', 'ب', 'ت', 'ث', 'ج', 'ح', 'خ', 'د', 'ذ', 'ر', 'ز', 'س', 'ش', 'ص', 'ض', 'ط', 'ظ', 'ع', 'غ', 'ف', 'ق', 'ل', 'م', 'ن', 'و', 'ٹ', 'پ', 'چ', 'ڈ', 'ڑ', 'ژ', 'ک', 'گ', 'ھ', 'ہ', 'ی', 'ے', 'ﮩ']], // Urdu
+            ['Vietnamese', 'vi', 1040, ['a', 'ă', 'â', 'b', 'c', 'd', 'đ', 'e', 'ê', 'g', 'h', 'i', 'k', 'l', 'm', 'n', 'o', 'ô', 'ơ', 'p', 'q', 'r', 's', 't', 'u', 'ư', 'v', 'x', 'y']], // Vietnamese
         }
         for (var row in arr) {
             if (row == lang) {
@@ -334,15 +352,15 @@ function main() {
             }
         }
     }
-    
+
     function alphabetMix(lang) {
         var letters = alphabet(lang);
         var lettersPairs = [];
         letters.forEach(
-            function(firstletter) {
+            function (firstletter) {
                 var pair;
                 letters.forEach(
-                    function(secondletter) {
+                    function (secondletter) {
                         pair = firstletter + secondletter;
                         lettersPairs[lettersPairs.length] = pair;
                     }
@@ -350,5 +368,12 @@ function main() {
             }
         );
         return lettersPairs;
+    }
+
+    function queryKeyword(keyword, url) {
+        var querykeyword = encodeURIComponent(keyword);
+        var url = 'https://www.' + googleSettings.domain + '/s?gs_rn=18&gs_ri=psy-ab&cp=7&gs_id=d7&xhr=t&q=';
+        Utilities.sleep(1000);
+        var response = UrlFetchApp.fetch(url + querykeyword);
     }
 }

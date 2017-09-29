@@ -1,10 +1,10 @@
 function main() {
 
-    var ARPU = 9; // APRU на пользователя без партнёра
-    var AverageCheck = 180; // Средний чек на пользователя без партнёра
+    var ARPU = 9; // APRU на пользователя
+    var AverageCheck = 180; // Средний чек на пользователя
 
-    ARPU = +Math.round(ARPU / 3);
-    AverageCheck = +Math.round(AverageCheck / 3);
+    ARPU = +(ARPU / 3).toFixed(2);
+    AverageCheck = +(AverageCheck / 3).toFixed(2);
 
     var minPosition = 2; // Минимально удерживаемая позиция
 

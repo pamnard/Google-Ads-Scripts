@@ -3,7 +3,7 @@ function main() {
     // Settings
 
     // Целевая кампания
-    var targetCampaign = 'PK_Search_New_Forex';
+    var targetCampaign = 'Search_New_Mining';
 
     // Ярлык которым скрипт помечает созданные слова
     var scriptLabel = 'Key_Parser';
@@ -26,7 +26,8 @@ function main() {
         if (CampaignRow) {
             var campaignSettings = getCampaignSettings();
             var googleSettings = setGoogleSettings(campaignSettings);
-            var negativesListFromCampaign = getCampaignNegatives();
+            var domainsList = allDomains();
+            var langsList = allLangs();
             getAdGroups();
         }
     }
@@ -34,7 +35,7 @@ function main() {
     function getAdGroups() {
         var adGroupPerfomanceAWQL = 'SELECT AdGroupName, AdGroupId ' +
             'FROM ADGROUP_PERFORMANCE_REPORT ' +
-            'WHERE CampaignId = ' + CampaignId + ' AND AdGroupStatus != REMOVED ' +
+            'WHERE CampaignId = ' + CampaignId + ' AND AdGroupStatus = ENABLED ' +
             'DURING TODAY';
         var adGroupPerfomanceRowsIter = AdWordsApp.report(adGroupPerfomanceAWQL).rows();
         while (adGroupPerfomanceRowsIter.hasNext()) {
@@ -42,27 +43,25 @@ function main() {
             var AdGroupName = AdGroupRow['AdGroupName'];
             var AdGroupId = AdGroupRow['AdGroupId'];
             if (AdGroupRow) {
-                var allNegativeKeywordsList = getNegativeKeywordForAdGroup();
-                var allalredyAddedKeywords = alredyAddedKeywords();
                 getKeywords();
             }
         }
 
         function getKeywords() { // Получаем ключи для обработки
-            var domainsList = allDomains();
-            var langsList = allLangs();
             var keywordSelector = AdWordsApp.keywords()
                 .withCondition('CampaignId = ' + CampaignId)
                 .withCondition('AdGroupId = ' + AdGroupId)
-                .withCondition("Status != REMOVED")
+                .withCondition('Status != REMOVED')
                 .withCondition('LabelNames CONTAINS_NONE ["' + scriptLabel + '"]')
-                .orderBy("Impressions DESC")
+                .withCondition('KeywordMatchType = BROAD')
+                .withCondition('Impressions > 0')
+                .orderBy('Impressions DESC')
                 .orderBy('Text')
-                .forDateRange("LAST_30_DAYS");
+                .forDateRange('LAST_30_DAYS');
             var keywordIterator = keywordSelector.get();
             while (keywordIterator.hasNext()) {
                 var keyword = keywordIterator.next();
-                var keywordtext = keyword.getText().toString().replace(/\+/g, '').replace(/\"/g, '');
+                var keywordtext = keyword.getText().toString().replace(/\+/g, '');
                 Logger.log(keywordtext);
                 for (var q = 0; q < domainsList.length; q++) {
                     var domain = domainsList[q];
@@ -74,139 +73,33 @@ function main() {
                 }
                 keyword.applyLabel(scriptLabel.toString());
             }
-
-            function allDomains() {
-                var arr = [];
-                for (var i = 0; i < googleSettings.length; i++) {
-                    var row = googleSettings[i];
-                    if (JSON.stringify(row).indexOf('domain') != -1) {
-                        var domain = googleSettings[i].location.domain;
-                        arr.push(domain);
-                    }
-                }
-                return arr;
-            }
-
-            function allLangs() {
-                var arr = [];
-                for (var i = 0; i < googleSettings.length; i++) {
-                    var row = googleSettings[i];
-                    if (JSON.stringify(row).indexOf('alphabet') != -1) {
-                        var alphabet = googleSettings[i].language.alphabet;
-                        arr.push(alphabet);
-                    }
-                }
-                return arr;
-            }
-        }
-
-        function alredyAddedKeywords() {
-            var report = [];
-            var keywordIterator = AdWordsApp.keywords()
-                .withCondition('CampaignId = ' + CampaignId)
-                .withCondition('AdGroupId = ' + AdGroupId)
-                .withCondition('Status != REMOVED')
-                .withCondition('IsNegative = FALSE')
-                .withLimit(20000)
-                .get();
-            if (keywordIterator.hasNext()) {
-                while (keywordIterator.hasNext()) {
-                    var keyword = keywordIterator.next();
-                    keyword = keyword.getText();
-                    report[report.length] = keyword.toString();
-                }
-            }
-            report = report.sort();
-            return report;
-        }
-
-        function getNegativeKeywordForAdGroup() {
-            var fullNegativeKeywordsList = [];
-
-            var adGroupIterator = AdWordsApp.adGroups() // Получаем минус-слова из группы
-                .withCondition('CampaignId = ' + CampaignId)
-                .withCondition('AdGroupId = ' + AdGroupId)
-                .get();
-            if (adGroupIterator.hasNext()) {
-                var adGroup = adGroupIterator.next();
-                var adGroupNegativeKeywordIterator = adGroup.negativeKeywords()
-                    .get();
-                while (adGroupNegativeKeywordIterator.hasNext()) {
-                    var adGroupNegativeKeyword = adGroupNegativeKeywordIterator.next();
-                    fullNegativeKeywordsList[fullNegativeKeywordsList.length] = adGroupNegativeKeyword.getText();
-                }
-            }
-            fullNegativeKeywordsList = fullNegativeKeywordsList.concat(fullNegativeKeywordsList, negativesListFromCampaign).sort();
-            return fullNegativeKeywordsList;
         }
 
         function queryKeyword(keyword, url, letters) {
             var alphabet = letters;
-            var querykeyword = encodeURIComponent(keyword);
-            var googleUrl = 'https://www.' + url + '/s?gs_rn=18&gs_ri=psy-ab&cp=7&gs_id=d7&xhr=t&q=';
-            var response = UrlFetchApp.fetch(googleUrl + querykeyword);
-            Utilities.sleep(100);
-            var text = response.getContentText('UTF-8');
-            var phrases = text.split(',');
-            var clearedphrases = [];
-            phrases.forEach(function (phrase) {
-                var clearedphrase = phrase.replace(/\+/g, '').replace(/\"/g, '').replace(/\[/g, '').replace(/\]/g, '').replace(/\./g, ' ').replace(/-/g, ' ').replace(/  /g, ' ').trim();
-                if ((clearedphrase.indexOf(keyword) != -1) && (clearedphrase != keyword)) {
-                    Logger.log(clearedphrase + ' - ' + clearedphrases.length);
-                    clearedphrases.push(clearedphrase);
-                }
-                if (clearedphrases.length > 5) {
-                    addingKeywords(checkSearchQweries(clearedphrases));
-                    clearedphrases = [];
+            var primary = [];
+            primary.push(keyword);
+            alphabet.forEach(function (letter) {
+                var wordPlusOneLetter = keyword + ' ' + letter;
+                primary.push(wordPlusOneLetter);
+            });
+            var secondary = [];
+            primary.forEach(function (line) {
+                var querykeyword = encodeURIComponent(line);
+                var clearedphrases = keysFetch(querykeyword);
+                addingKeywords(clearedphrases); // Добавляем новые ключевые слова
+                if (clearedphrases.length > +9) {
+                    alphabet.forEach(function (letter) {
+                        var wordPlusTwoLetter = line + letter;
+                        secondary.push(wordPlusTwoLetter);
+                    });
                 }
             });
-            addingKeywords(checkSearchQweries(clearedphrases)); // Добавляем новые ключевые слова
-            if (clearedphrases.length > +1) {
-                alphabet.forEach(function (letter) {
-                    var wordPlusOneLetter = keyword + ' ' + letter;
-                    var querykeyword = encodeURIComponent(wordPlusOneLetter);
-                    var response = UrlFetchApp.fetch(googleUrl + querykeyword);
-                    Utilities.sleep(100);
-                    var text = response.getContentText('UTF-8');
-                    var phrases = text.split(',');
-                    var clearedphrasesOne = [];
-                    phrases.forEach(function (phrase) {
-                        var clearedphrase = phrase.replace(/\+/g, '').replace(/\"/g, '').replace(/\[/g, '').replace(/\]/g, '').replace(/\./g, ' ').replace(/-/g, ' ').replace(/  /g, ' ').trim();
-                        if ((clearedphrase.indexOf(keyword) != -1) && (clearedphrase != keyword) && (clearedphrase != wordPlusOneLetter)) {
-                            Logger.log(clearedphrase + ' - ' + clearedphrasesOne.length);
-                            clearedphrasesOne.push(clearedphrase);
-                        }
-                        if (clearedphrasesOne.length > 5) {
-                            addingKeywords(checkSearchQweries(clearedphrasesOne));
-                            clearedphrasesOne = [];
-                        }
-                    });
-                    addingKeywords(checkSearchQweries(clearedphrasesOne)); // Добавляем новые ключевые слова
-                    if (clearedphrasesOne.length > +1) {
-                        alphabet.forEach(function (letter) {
-                            var wordPlusTwoLetter = wordPlusOneLetter + letter;
-                            var querykeyword = encodeURIComponent(wordPlusTwoLetter);
-                            var response = UrlFetchApp.fetch(googleUrl + querykeyword);
-                            Utilities.sleep(100);
-                            var text = response.getContentText('UTF-8');
-                            var phrases = text.split(',');
-                            var clearedphrasesTwo = [];
-                            phrases.forEach(function (phrase) {
-                                var clearedphrase = phrase.replace(/\+/g, '').replace(/\"/g, '').replace(/\[/g, '').replace(/\]/g, '').replace(/\./g, ' ').replace(/-/g, ' ').replace(/  /g, ' ').trim();
-                                if ((clearedphrase.indexOf(keyword) != -1) && (clearedphrase != keyword) && (clearedphrase != wordPlusTwoLetter)) {
-                                    Logger.log(clearedphrase + ' - ' + clearedphrasesTwo.length);
-                                    clearedphrasesTwo.push(clearedphrase);
-                                }
-                                if (clearedphrasesTwo.length > 5) {
-                                    addingKeywords(checkSearchQweries(clearedphrasesTwo));
-                                    clearedphrasesTwo = [];
-                                }
-                            });
-                            addingKeywords(checkSearchQweries(clearedphrasesTwo)); // Добавляем новые ключевые слова
-                        });
-                    }
-                });
-            }
+            secondary.forEach(function (line) {
+                var querykeyword = encodeURIComponent(line);
+                var clearedphrases = keysFetch(querykeyword);
+                addingKeywords(clearedphrases); // Добавляем новые ключевые слова
+            });
 
             function addingKeywords(keywordsArray) {
                 var newKeywordsArray = keywordsArray;
@@ -222,154 +115,54 @@ function main() {
                             var keywordOperation = adGroup.newKeywordBuilder()
                                 .withText(newKey)
                                 .build();
-                            if (keywordOperation.isSuccessful()) { // Получение результатов.
-                                var keyword = keywordOperation.getResult();
-                                // keyword.pause();
-                                // keyword.applyLabel(scriptLabel.toString());
-                                Logger.log('Добавляем: ' + newKey);
-                            } else {
-                                var errors = keywordOperation.getErrors(); // Исправление ошибок.
-                            }
+//                            if (keywordOperation.isSuccessful()) { // Получение результатов.
+//                                var keyword = keywordOperation.getResult();
+//                                Logger.log('Добавляем: ' + newKey);
+//                            } else {
+//                                var errors = keywordOperation.getErrors(); // Исправление ошибок.
+//                            }
                         }
                     }
                 );
             }
-
-            function checkSearchQweries(arr) {
-                var report = arr.sort();
-                var resultList = [];
-                report.forEach(function (keyword) {
-                    if (checkingAddedKeywords(keyword) != false) {
-                        if (checkNegativeKeywords(keyword) != false) {
-                            resultList.push(keyword);
-                        } else {
-                            Logger.log('Не добавляем блокируемое слово: ' + keyword);
-                        }
-                    } else {
-                        Logger.log('Не добавляем дубль: ' + keyword);
-                    }
+          
+            function keysFetch(key) {
+                var googleUrl = 'https://www.' + url + '/s?gs_rn=18&gs_ri=psy-ab&cp=7&gs_id=d7&xhr=t&q=';
+                Utilities.sleep(100);
+                var response = UrlFetchApp.fetch(googleUrl + key);
+                var text = response.getContentText('UTF-8');
+                var phrases = JSON.parse(text);
+                var arr = [];
+                phrases[1].forEach(function (line) {
+                  arr.push(line[0]);
                 });
-                resultList = resultList.sort();
-
-                function checkingAddedKeywords(keywordForCheck) {
-                    var newkeyword = keywordForCheck;
-                    var result = true;
-
-                    function checkResult(check) {
-                        if (check != true) {
-                            result = false;
-                        }
-                    }
-                    allalredyAddedKeywords.forEach(function (addedkeyword) {
-                        if (newkeyword == addedkeyword) {
-                            checkResult(false);
-                        }
-                    });
-                    return result;
-                }
-
-                function checkNegativeKeywords(keywordForCheck) {
-                    function checkingNegativeKeywords() {
-                        var result = true;
-
-                        function checkResult(check) {
-                            if (check != true) {
-                                result = false;
-                            }
-                        }
-                        allNegativeKeywordsList.forEach(
-                            function (negativeKeyword) {
-                                var negativeWord = negativeKeyword.toString().toLowerCase();
-                                var clearedNegativeKeyword = negativeWord.replace(/\+/g, '').replace(/\"/g, '');
-                                if ((keywordForCheck.indexOf('[') != -1) || (keywordForCheck.indexOf('"') != -1)) { // минус-фраза с точным или фразовым соответствием
-                                    if (negativeWord == keywordForCheck) {
-                                        checkResult(false);
-                                    } else if (negativeWord.indexOf('[') == -1) {
-                                        if (clearedNegativeKeyword.indexOf(' ') != -1) {
-                                            if (keywordForCheck.indexOf(clearedNegativeKeyword) != -1) { // очищеная минус-фраза есть в ключевой фразе, но минус-фраза не в точном и не в широком соответствии
-                                                checkResult(false);
-                                            }
-                                        } else {
-                                            var words = [];
-                                            words = keywordForCheck.toLowerCase().replace(/\+/g, '').replace(/\"/g, '').replace(/\[/g, '').replace(/\]/g, '').split(' '); // разбиваем ключевую фразу на слова
-                                            words.forEach(
-                                                function (word) {
-                                                    if (negativeWord == word) { // проверяем совпадение минус-фразы(слова), со словами в ключевой фразе
-                                                        checkResult(false);
-                                                    }
-                                                }
-                                            );
-                                        }
-                                    }
-                                } else { // минус-фраза с широким соответствием
-                                    if (negativeWord.indexOf(' ') != -1) {
-                                        var negativeWords = [];
-                                        negativeWords = negativeWord.replace(/\+/g, '').replace(/\"/g, '').replace(/\[/g, '').replace(/\]/g, '').split(' ');
-                                        var words = [];
-                                        words = keywordForCheck.toLowerCase().replace(/\+/g, '').replace(/\"/g, '').replace(/\[/g, '').replace(/\]/g, '').split(' '); // разбиваем ключевую фразу на слова
-                                        Array.prototype.diff = function (a) {
-                                            return this.filter(function (i) {
-                                                return !(a.indexOf(i) > -1);
-                                            });
-                                        };
-                                        var diffWords = negativeWords.diff(words);
-                                        if (diffWords.length == 0) {
-                                            checkResult(false);
-                                        }
-                                    } else {
-                                        var words = [];
-                                        words = keywordForCheck.toLowerCase().replace(/\+/g, '').replace(/\"/g, '').replace(/\[/g, '').replace(/\]/g, '').split(' '); // разбиваем ключевую фразу на слова
-                                        words.forEach(
-                                            function (word) {
-                                                if (negativeWord == word) { // проверяем совпадение минус-фразы(слова), со словами в ключевой фразе
-                                                    checkResult(false);
-                                                }
-                                            }
-                                        );
-                                    }
-                                }
-                            }
-                        );
-                        return result;
-                    }
-                    return checkingNegativeKeywords();
-                }
-                return resultList;
+                return arr;
             }
         }
     }
 
-    function getCampaignNegatives() {
-        var campaignNegativeKeywordsList = [];
-        var campaignIterator = AdWordsApp.campaigns()
-            .withCondition('CampaignId = ' + CampaignId)
-            .get();
-        if (campaignIterator.hasNext()) {
-            var campaign = campaignIterator.next();
-            var negativeKeywordListSelector = campaign.negativeKeywordLists() // Получаем минус-слова из списков
-                .withCondition('Status = ACTIVE');
-            var negativeKeywordListIterator = negativeKeywordListSelector
-                .get();
-            while (negativeKeywordListIterator.hasNext()) {
-                var negativeKeywordList = negativeKeywordListIterator.next();
-                var sharedNegativeKeywordIterator = negativeKeywordList.negativeKeywords()
-                    .get();
-                var sharedNegativeKeywords = [];
-                while (sharedNegativeKeywordIterator.hasNext()) {
-                    var negativeKeywordFromList = sharedNegativeKeywordIterator.next();
-                    sharedNegativeKeywords[sharedNegativeKeywords.length] = negativeKeywordFromList.getText();
-                }
-                campaignNegativeKeywordsList = campaignNegativeKeywordsList.concat(campaignNegativeKeywordsList, sharedNegativeKeywords);
-            }
-            var campaignNegativeKeywordIterator = campaign.negativeKeywords() // Получаем минус-слова из кампании
-                .get();
-            while (campaignNegativeKeywordIterator.hasNext()) {
-                var campaignNegativeKeyword = campaignNegativeKeywordIterator.next();
-                campaignNegativeKeywordsList[campaignNegativeKeywordsList.length] = campaignNegativeKeyword.getText();
+    function allDomains() {
+        var arr = [];
+        for (var i = 0; i < googleSettings.length; i++) {
+            var row = googleSettings[i];
+            if (JSON.stringify(row).indexOf('domain') != -1) {
+                var domain = googleSettings[i].location.domain;
+                arr.push(domain);
             }
         }
-        campaignNegativeKeywordsList = campaignNegativeKeywordsList.sort();
-        return campaignNegativeKeywordsList;
+        return arr;
+    }
+
+    function allLangs() {
+        var arr = [];
+        for (var i = 0; i < googleSettings.length; i++) {
+            var row = googleSettings[i];
+            if (JSON.stringify(row).indexOf('alphabet') != -1) {
+                var alphabet = googleSettings[i].language.alphabet;
+                arr.push(alphabet);
+            }
+        }
+        return arr;
     }
 
     function getCampaignSettings() {

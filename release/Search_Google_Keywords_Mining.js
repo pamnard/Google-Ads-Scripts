@@ -56,13 +56,13 @@ function main() {
                 .withCondition('KeywordMatchType = BROAD')
                 .withCondition('Impressions > 0')
                 .orderBy('Impressions DESC')
-                .orderBy('Text')
-                .forDateRange('LAST_30_DAYS');
+                .forDateRange('ALL_TIME');
             var keywordIterator = keywordSelector.get();
             while (keywordIterator.hasNext()) {
                 var keyword = keywordIterator.next();
-                var keywordtext = keyword.getText().toString().replace(/\+/g, '');
+                var keywordtext = keyword.getText().toString();
                 Logger.log(keywordtext);
+                keyword.applyLabel(scriptLabel.toString());
                 for (var q = 0; q < domainsList.length; q++) {
                     var domain = domainsList[q];
                     Logger.log(domain);
@@ -71,34 +71,38 @@ function main() {
                         var serp = queryKeyword(keywordtext, domain, alphabet); // Собираем ключи
                     }
                 }
-                keyword.applyLabel(scriptLabel.toString());
             }
         }
 
         function queryKeyword(keyword, url, letters) {
+            var key = keyword.replace(/\+/g, '');
             var alphabet = letters;
             var primary = [];
-            primary.push(keyword);
+            primary.push(key);
             alphabet.forEach(function (letter) {
-                var wordPlusOneLetter = keyword + ' ' + letter;
+                var wordPlusOneLetter = key + ' ' + letter;
                 primary.push(wordPlusOneLetter);
             });
             var secondary = [];
             primary.forEach(function (line) {
-                var querykeyword = encodeURIComponent(line);
-                var clearedphrases = keysFetch(querykeyword);
-                addingKeywords(clearedphrases); // Добавляем новые ключевые слова
-                if (clearedphrases.length > +9) {
-                    alphabet.forEach(function (letter) {
-                        var wordPlusTwoLetter = line + letter;
-                        secondary.push(wordPlusTwoLetter);
-                    });
+                if (line != key) {
+                    var querykeyword = encodeURIComponent(line);
+                    var clearedphrases = keysFetch(querykeyword);
+                    addingKeywords(clearedphrases); // Добавляем новые ключевые слова
+                    if (clearedphrases.length > +9) {
+                        alphabet.forEach(function (letter) {
+                            var wordPlusTwoLetter = line + letter;
+                            secondary.push(wordPlusTwoLetter);
+                        });
+                    }
                 }
             });
             secondary.forEach(function (line) {
-                var querykeyword = encodeURIComponent(line);
-                var clearedphrases = keysFetch(querykeyword);
-                addingKeywords(clearedphrases); // Добавляем новые ключевые слова
+                if (line != key) {
+                    var querykeyword = encodeURIComponent(line);
+                    var clearedphrases = keysFetch(querykeyword);
+                    addingKeywords(clearedphrases); // Добавляем новые ключевые слова
+                }
             });
 
             function addingKeywords(keywordsArray) {
@@ -107,25 +111,25 @@ function main() {
                     function (newKeyword) {
                         var newKey = '+' + newKeyword.toString().replace(/ /g, ' +').replace(/\./g, ' +').replace(/\&/g, ' +');
                         var adGroupIterator = AdWordsApp.adGroups()
-                            .withCondition('CampaignId = ' + CampaignId)
-                            .withCondition('AdGroupId = ' + AdGroupId)
+                            .withCondition('CampaignName = "' + CampaignName + '"')
+                            .withCondition('AdGroupName = "' + AdGroupName + '"')
                             .get();
                         while (adGroupIterator.hasNext()) {
                             var adGroup = adGroupIterator.next();
                             var keywordOperation = adGroup.newKeywordBuilder()
                                 .withText(newKey)
                                 .build();
-//                            if (keywordOperation.isSuccessful()) { // Получение результатов.
-//                                var keyword = keywordOperation.getResult();
-//                                Logger.log('Добавляем: ' + newKey);
-//                            } else {
-//                                var errors = keywordOperation.getErrors(); // Исправление ошибок.
-//                            }
+                            //                            if (keywordOperation.isSuccessful()) { // Получение результатов.
+                            //                                var keyword = keywordOperation.getResult();
+                            //                                Logger.log('Добавляем: ' + newKey);
+                            //                            } else {
+                            //                                var errors = keywordOperation.getErrors(); // Исправление ошибок.
+                            //                            }
                         }
                     }
                 );
             }
-          
+
             function keysFetch(key) {
                 var googleUrl = 'https://www.' + url + '/s?gs_rn=18&gs_ri=psy-ab&cp=7&gs_id=d7&xhr=t&q=';
                 Utilities.sleep(100);
@@ -134,7 +138,7 @@ function main() {
                 var phrases = JSON.parse(text);
                 var arr = [];
                 phrases[1].forEach(function (line) {
-                  arr.push(line[0]);
+                    arr.push(line[0]);
                 });
                 return arr;
             }

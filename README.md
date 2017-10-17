@@ -1,8 +1,5 @@
 # Adwords
 
-Скрипты для Google AdWords
-https://developers.google.com/adwords/scripts/
-
 `/release/`
 + `Budget_Control.js` - Контролирует точный расход бюджета для борьбы с https://support.google.com/adwords/answer/1704443
 + `GDN_Excluded_Placement.js` - Исключает площадки с плохими финасовыми показателями

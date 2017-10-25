@@ -1,5 +1,9 @@
 # Adwords
 
+`/dev/`
++ `Eval.js` - Исполняет код внешней библиотеки
++ `TelegramAPI_sample.js` - Шлёт сообщения в Telegram
+
 `/release/`
 + `Budget_Control.js` - Контролирует точный расход бюджета для борьбы с https://support.google.com/adwords/answer/1704443
 + `GDN_Excluded_Placement.js` - Исключает площадки с плохими финасовыми показателями

@@ -54,7 +54,6 @@ function main() {
                 .withCondition('Status != REMOVED')
                 .withCondition('LabelNames CONTAINS_NONE ["' + scriptLabel + '"]')
                 .withCondition('KeywordMatchType = BROAD')
-                .withCondition('Impressions > 0')
                 .orderBy('Impressions DESC')
                 .forDateRange('ALL_TIME');
             var keywordIterator = keywordSelector.get();

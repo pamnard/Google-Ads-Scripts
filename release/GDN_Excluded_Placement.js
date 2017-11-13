@@ -168,27 +168,4 @@ function main() {
             return duringDates;
         }
     }
-
-    function containsAny(str, substrings) {
-        for (var i = 0; i != substrings.length; i++) {
-            var substring = substrings[i];
-            if ((str.indexOf(substring) != -1) && (str.indexOf('mobileapp::') == -1)) {
-                return substring;
-            }
-        }
-        return null;
-    }
-
-    function unique(arr) { // убираем повторы площадок
-        var result = [];
-        nextInput:
-            for (var i = 0; i < arr.length; i++) {
-                var str = arr[i]; // для каждого элемента
-                for (var j = 0; j < result.length; j++) { // ищем, был ли он уже?
-                    if (result[j] == str) continue nextInput; // если да, то следующий
-                }
-                result.push(str);
-            }
-        return result;
-    }
 }

@@ -25,8 +25,7 @@ function main() {
 
     var campaignPerfomaceAWQL = 'SELECT CampaignName, CampaignId ' +
         'FROM CAMPAIGN_PERFORMANCE_REPORT ' +
-        'WHERE CampaignStatus = ENABLED AND AdvertisingChannelType = SEARCH ' + 
-//      'AND CampaignName DOES_NOT_CONTAIN_IGNORE_CASE DSA AND CampaignName DOES_NOT_CONTAIN "["
+        'WHERE AdvertisingChannelType = SEARCH ' + 
         'DURING TODAY';
     var campaignPerfomaceRowsIter = AdWordsApp.report(campaignPerfomaceAWQL, REPORTING_OPTIONS).rows();
     while (campaignPerfomaceRowsIter.hasNext()) {
@@ -75,7 +74,7 @@ function main() {
     function adGroupReport() {
         var adGroupPerfomanceAWQL = 'SELECT AdGroupName, AdGroupId ' +
             'FROM ADGROUP_PERFORMANCE_REPORT ' +
-            'WHERE CampaignId = ' + CampaignId + ' AND AdGroupStatus = ENABLED ' +
+            'WHERE CampaignId = ' + CampaignId + ' ' +
             'DURING TODAY';
 
         var adGroupPerfomanceRowsIter = AdWordsApp.report(adGroupPerfomanceAWQL, REPORTING_OPTIONS).rows();
@@ -367,15 +366,9 @@ function main() {
     }
 
     function unique(arr) { // убираем повторы
-        var result = [];
-        nextInput:
-            for (var i = 0; i < arr.length; i++) {
-                var str = arr[i]; // для каждого элемента
-                for (var j = 0; j < result.length; j++) { // ищем, был ли он уже?
-                    if (result[j] == str) continue nextInput; // если да, то следующий
-                }
-                result.push(str);
-            }
-        return result;
+        var tmp = {};
+        return arr.filter(function (a) {
+            return a in tmp ? 0 : tmp[a] = 1;
+        });
     }
 }

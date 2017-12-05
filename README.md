@@ -1,4 +1,4 @@
-# Adwords
+# Скрипты для Google AdWords
 
 `/dev/`
 + `Eval.js` - Исполняет код внешней библиотеки

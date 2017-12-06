@@ -141,7 +141,7 @@ function main() {
                 var newKeywordsArray = keywordsArray;
                 newKeywordsArray.forEach(
                     function (newKeyword) {
-                        var newKey = '+' + newKeyword.toString().replace(/ /g, ' +').replace(/\./g, ' +').replace(/\&/g, ' +');
+                        var newKey = '+' + newKeyword.toString().replace(/ /g, ' +');
                         var adGroupIterator = AdWordsApp.adGroups()
                             .withCondition('CampaignName = "' + CampaignName + '"')
                             .withCondition('AdGroupName = "' + AdGroupName + '"')

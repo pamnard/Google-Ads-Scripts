@@ -2,11 +2,21 @@ function main() {
 
     // Settings
 
-    // Целевая кампания
-    var targetCampaign = 'Search_New_Mining';
+    var CONFIG = {
+        targetCampaign: 'Search_New_Mining',
+        // Целевая кампания
 
-    // Ярлык которым скрипт помечает созданные слова
-    var scriptLabel = 'Key_Parser';
+        scriptLabel: 'Key_Parser',
+        // Ярлык которым скрипт помечает созданные слова
+
+        impressionsThreshold: '10'
+        // Минимальный порог показов для исходных ключевых слов
+    };
+
+    var REPORTING_OPTIONS = {
+        // Comment out the following line to default to the latest reporting version.
+        apiVersion: 'v201705'
+    };
 
     //---------------------------------------------------------------------------------------------------------
 
@@ -15,15 +25,16 @@ function main() {
     var campaignPerfomaceAWQL = 'SELECT CampaignName, CampaignId ' +
         'FROM CAMPAIGN_PERFORMANCE_REPORT ' +
         'WHERE AdvertisingChannelType = SEARCH ' +
-        'AND CampaignName = ' + targetCampaign + ' ' +
+        'AND CampaignName = ' + CONFIG.targetCampaign + ' ' +
         'DURING TODAY';
-    var campaignPerfomaceRowsIter = AdWordsApp.report(campaignPerfomaceAWQL).rows();
+    var campaignPerfomaceRowsIter = AdWordsApp.report(campaignPerfomaceAWQL, REPORTING_OPTIONS).rows();
     Logger.log(campaignPerfomaceAWQL);
     while (campaignPerfomaceRowsIter.hasNext()) {
-        var CampaignRow = campaignPerfomaceRowsIter.next();
-        var CampaignName = CampaignRow['CampaignName'];
-        var CampaignId = CampaignRow['CampaignId'];
+        var CampaignRow = campaignPerfomaceRowsIter.next(),
+            CampaignName = CampaignRow['CampaignName'],
+            CampaignId = CampaignRow['CampaignId'];
         if (CampaignRow) {
+            var negativesListFromCampaign = getCampaignNegatives();
             var campaignSettings = getCampaignSettings();
             var googleSettings = setGoogleSettings(campaignSettings);
             var domainsList = allDomains();
@@ -37,14 +48,36 @@ function main() {
             'FROM ADGROUP_PERFORMANCE_REPORT ' +
             'WHERE CampaignId = ' + CampaignId + ' AND AdGroupStatus = ENABLED ' +
             'DURING TODAY';
-        var adGroupPerfomanceRowsIter = AdWordsApp.report(adGroupPerfomanceAWQL).rows();
+        var adGroupPerfomanceRowsIter = AdWordsApp.report(adGroupPerfomanceAWQL, REPORTING_OPTIONS).rows();
         while (adGroupPerfomanceRowsIter.hasNext()) {
             var AdGroupRow = adGroupPerfomanceRowsIter.next();
             var AdGroupName = AdGroupRow['AdGroupName'];
             var AdGroupId = AdGroupRow['AdGroupId'];
             if (AdGroupRow) {
+                var negativeKeywords = getNegativeKeywordForAdGroup();
+                Logger.log('Минус-слов: ' + negativeKeywords.length);
                 getKeywords();
             }
+        }
+
+        function getNegativeKeywordForAdGroup() {
+            var result = [];
+            var adGroupIterator = AdWordsApp.adGroups()
+                .withCondition('AdGroupId = ' + AdGroupId)
+                .get();
+            if (adGroupIterator.hasNext()) {
+                var adGroup = adGroupIterator.next();
+                var negativeKeywordIterator = adGroup.negativeKeywords()
+                    .get();
+                while (negativeKeywordIterator.hasNext()) {
+                    var negativeKeyword = negativeKeywordIterator.next();
+                    if (negativeKeyword.getMatchType() == 'BROAD') {
+                        result.push(negativeKeyword.getText().toString());
+                    }
+                }
+            }
+            result = result.concat(negativesListFromCampaign, result);
+            return result;
         }
 
         function getKeywords() { // Получаем ключи для обработки
@@ -52,16 +85,16 @@ function main() {
                 .withCondition('CampaignId = ' + CampaignId)
                 .withCondition('AdGroupId = ' + AdGroupId)
                 .withCondition('Status != REMOVED')
-                .withCondition('LabelNames CONTAINS_NONE ["' + scriptLabel + '"]')
+                .withCondition('LabelNames CONTAINS_NONE ["' + CONFIG.scriptLabel + '"]')
                 .withCondition('KeywordMatchType = BROAD')
+                .withCondition('Impressions >= ' + CONFIG.impressionsThreshold)
                 .orderBy('Impressions DESC')
-                .forDateRange('ALL_TIME');
+                .forDateRange('LAST_30_DAYS');
             var keywordIterator = keywordSelector.get();
             while (keywordIterator.hasNext()) {
                 var keyword = keywordIterator.next();
-                var keywordtext = keyword.getText().toString();
+                var keywordtext = keyword.getText().toString().replace(/\+/g, '');
                 Logger.log(keywordtext);
-                keyword.applyLabel(scriptLabel.toString());
                 for (var q = 0; q < domainsList.length; q++) {
                     var domain = domainsList[q];
                     Logger.log(domain);
@@ -70,21 +103,21 @@ function main() {
                         var serp = queryKeyword(keywordtext, domain, alphabet); // Собираем ключи
                     }
                 }
+                keyword.applyLabel(CONFIG.scriptLabel);
             }
         }
 
         function queryKeyword(keyword, url, letters) {
-            var key = keyword.replace(/\+/g, '');
             var alphabet = letters;
             var primary = [];
-            primary.push(key);
+            primary.push(keyword);
             alphabet.forEach(function (letter) {
-                var wordPlusOneLetter = key + ' ' + letter;
+                var wordPlusOneLetter = keyword + ' ' + letter;
                 primary.push(wordPlusOneLetter);
             });
             var secondary = [];
             primary.forEach(function (line) {
-                if (line != key) {
+                if (line != keyword) {
                     var querykeyword = encodeURIComponent(line);
                     var clearedphrases = keysFetch(querykeyword);
                     addingKeywords(clearedphrases); // Добавляем новые ключевые слова
@@ -97,7 +130,7 @@ function main() {
                 }
             });
             secondary.forEach(function (line) {
-                if (line != key) {
+                if (line != keyword) {
                     var querykeyword = encodeURIComponent(line);
                     var clearedphrases = keysFetch(querykeyword);
                     addingKeywords(clearedphrases); // Добавляем новые ключевые слова
@@ -118,32 +151,73 @@ function main() {
                             var keywordOperation = adGroup.newKeywordBuilder()
                                 .withText(newKey)
                                 .build();
-                            //                            if (keywordOperation.isSuccessful()) { // Получение результатов.
-                            //                                var keyword = keywordOperation.getResult();
-                            //                                Logger.log('Добавляем: ' + newKey);
-                            //                            } else {
-                            //                                var errors = keywordOperation.getErrors(); // Исправление ошибок.
-                            //                            }
                         }
                     }
                 );
             }
 
             function keysFetch(key) {
-                var googleUrl = 'https://www.' + url + '/s?gs_rn=18&gs_ri=psy-ab&cp=7&gs_id=d7&xhr=t&q=';
                 Utilities.sleep(100);
-                var response = UrlFetchApp.fetch(googleUrl + key);
-                var text = response.getContentText('UTF-8');
-                var phrases = JSON.parse(text);
-                var arr = [];
+                var googleUrl = 'https://www.' + url + '/s?gs_rn=18&gs_ri=psy-ab&cp=7&gs_id=d7&xhr=t&q=',
+                    response = UrlFetchApp.fetch(googleUrl + key),
+                    text = response.getContentText('UTF-8'),
+                    phrases = JSON.parse(text),
+                    arr = [];
+
                 phrases[1].forEach(function (line) {
-                    arr.push(line[0]);
+                    var words = line[0].toString().replace(/[\.;#\(\)=\+:\-\/]+/g, ' ').split(' ');
+                    if (words.length < 6) {
+                        var reason = true;
+                        words.forEach(function (word) {
+                            negativeKeywords.forEach(function (negativeWord) {
+                                if (word == negativeWord) {
+                                    reason = false;
+                                }
+                            });
+                        });
+                        if (reason != false) {
+                            arr.push(line[0]);
+                        }
+                    }
                 });
                 return arr;
             }
         }
     }
-
+    
+    function getCampaignNegatives() {
+        var campaignNegativeKeywordsList = [];
+        var campaignIterator = AdWordsApp.campaigns()
+            .withCondition('CampaignId = ' + CampaignId)
+            .get();
+        if (campaignIterator.hasNext()) {
+            var campaign = campaignIterator.next();
+            var negativeKeywordListSelector = campaign.negativeKeywordLists() // Получаем минус-слова из списков
+                .withCondition('Status = ACTIVE');
+            var negativeKeywordListIterator = negativeKeywordListSelector
+                .get();
+            while (negativeKeywordListIterator.hasNext()) {
+                var negativeKeywordList = negativeKeywordListIterator.next();
+                var sharedNegativeKeywordIterator = negativeKeywordList.negativeKeywords()
+                    .get();
+                var sharedNegativeKeywords = [];
+                while (sharedNegativeKeywordIterator.hasNext()) {
+                    var negativeKeywordFromList = sharedNegativeKeywordIterator.next();
+                    sharedNegativeKeywords.push(negativeKeywordFromList.getText());
+                }
+                campaignNegativeKeywordsList = campaignNegativeKeywordsList.concat(campaignNegativeKeywordsList, sharedNegativeKeywords);
+            }
+            var campaignNegativeKeywordIterator = campaign.negativeKeywords() // Получаем минус-слова из кампании
+                .get();
+            while (campaignNegativeKeywordIterator.hasNext()) {
+                var campaignNegativeKeyword = campaignNegativeKeywordIterator.next();
+                campaignNegativeKeywordsList.push(campaignNegativeKeyword.getText());
+            }
+        }
+        campaignNegativeKeywordsList = campaignNegativeKeywordsList.sort();
+        return campaignNegativeKeywordsList;
+    }
+    
     function allDomains() {
         var arr = [];
         for (var i = 0; i < googleSettings.length; i++) {
@@ -169,10 +243,11 @@ function main() {
     }
 
     function getCampaignSettings() {
-        var regionIds = allRegionsIds();
-        var settings = [];
+        var settings = [],
+            regionIds = allRegionsIds();
+
         var campaignIterator = AdWordsApp.campaigns()
-            .withCondition('Name = PK_Search_New_Mining')
+            .withCondition('Name = ' + CONFIG.targetCampaign)
             .get();
         if (campaignIterator.hasNext()) {
             var campaign = campaignIterator.next();
@@ -534,15 +609,16 @@ function main() {
     function ensureAccountLabels() {
         function getAccountLabelNames() {
             var labelNames = [];
-            var iterator = AdWordsApp.labels().get();
+            var iterator = AdWordsApp.labels()
+                .get();
             while (iterator.hasNext()) {
                 labelNames.push(iterator.next().getName());
             }
             return labelNames;
         }
         var labelNames = getAccountLabelNames();
-        if (labelNames.indexOf(scriptLabel) == -1) {
-            AdWordsApp.createLabel(scriptLabel);
+        if (labelNames.indexOf(CONFIG.scriptLabel) == -1) {
+            AdWordsApp.createLabel(CONFIG.scriptLabel);
         }
     }
 }

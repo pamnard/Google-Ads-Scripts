@@ -1,10 +1,7 @@
 function main() {
 
     var CONFIG = {
-        exclude: ['job', 'gta', 'game', 'blogspot', 'faucet', 'satoshi', 'dota', 'minecraft', 'flash', 'apk', 'android', 'mp3', 
-        'fb2', 'farm', 'dating', 'astro', 'film', 'video', 'movie',      'book', 'download', 'torrent', 'kino', 'radio', 
-        'weather', 'chords', 'zodiak', 'recept', 'recipe', 'spongebob', 'barbie', 'skyrim', 'ferma', 'mafia', 'mario', 'epub', 
-        '2048', 'dendy', 'sega', 'zuma', 'pdf', 'simulat', 'mods', 'play', 'spintires', 'spin-tires'],
+        exclude: ['job', 'gta', 'game', 'blogspot', 'faucet', 'satoshi', 'dota', 'minecraft', 'flash', 'apk', 'android', 'mp3', 'fb2', 'farm', 'dating', 'astro', 'film', 'video', 'movie', 'book', 'download', 'torrent', 'kino', 'radio', 'weather', 'chords', 'zodiak', 'recept', 'recipe', 'spongebob', 'barbie', 'skyrim', 'ferma', 'mafia', 'mario', 'epub', '2048', 'dendy', 'sega', 'zuma', 'pdf', 'simulat', 'mods', 'play', 'spintires', 'spin-tires'],
         // Площадки содержаище любое из этих значений должны быть исключены
 
         period: 'LAST_7_DAYS',

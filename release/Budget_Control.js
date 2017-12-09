@@ -1,14 +1,19 @@
 function main() {
-  
-    var SLACK_URL = 'https://hooks.slack.com/services/xxxxxxxx/zzzzzzzz/yyyyyyyy';
-    var SCRIPT_LABEL = 'Budget_Control';
-  
+
+    var CONFIG = {
+        SLACK_URL: 'https://hooks.slack.com/services/xxxxxxxx/zzzzzzzz/yyyyyyyy',
+        // Вебхук для Слака
+        
+        SCRIPT_LABEL: 'Budget_Control'
+        // Следим за кампаниями помеченными этим ярлыком
+    };
+
     // ===================================================================
-  
+
     ensureAccountLabels(); // Проверяем и создаем ярлык
-  
+
     var campaignSelector = AdWordsApp.campaigns()
-        .withCondition('LabelNames CONTAINS_ANY ["' + SCRIPT_LABEL + '"]');
+        .withCondition('LabelNames CONTAINS_ANY ["' + CONFIG.SCRIPT_LABEL + '"]');
     var campaignIterator = campaignSelector.get();
     while (campaignIterator.hasNext()) {
         var campaign = campaignIterator.next();
@@ -20,10 +25,8 @@ function main() {
             var allAssociatedCost = +0;
             while (budgetCampaignIterator.hasNext()) {
                 var associatedCampaign = budgetCampaignIterator.next();
-                // Logger.log(associatedCampaign.getName());
                 var associatedCampaignStats = associatedCampaign.getStatsFor('TODAY');
                 var associatedCost = associatedCampaignStats.getCost();
-                // Logger.log('Budget spend: ' + associatedCost);
                 allAssociatedCost = allAssociatedCost + +associatedCost;
             }
             allAssociatedCost = parseFloat(allAssociatedCost).toFixed(2)
@@ -68,7 +71,7 @@ function main() {
             }
         }
     }
-  
+
     function ensureAccountLabels() {
         function getAccountLabelNames() {
             var labelNames = [];
@@ -79,11 +82,11 @@ function main() {
             return labelNames;
         }
         var labelNames = getAccountLabelNames();
-        if (labelNames.indexOf(SCRIPT_LABEL) == -1) {
-            AdWordsApp.createLabel(SCRIPT_LABEL);
+        if (labelNames.indexOf(CONFIG.SCRIPT_LABEL) == -1) {
+            AdWordsApp.createLabel(CONFIG.SCRIPT_LABEL);
         }
     }
-  
+
     function sendSlackMessage(text, opt_channel) {
         var slackMessage = {
             text: text,
@@ -97,6 +100,6 @@ function main() {
             contentType: 'application/json',
             payload: JSON.stringify(slackMessage)
         };
-        UrlFetchApp.fetch(SLACK_URL, options);
+        UrlFetchApp.fetch(CONFIG.SLACK_URL, options);
     }
 }

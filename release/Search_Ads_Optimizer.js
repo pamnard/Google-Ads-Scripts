@@ -1,27 +1,31 @@
 function main() {
 
+    var CONFIG = {
+        customDaysInDateRange: 365,
+        // Указываем количество дней для выборки
+        // Если хотим использовать данные о конверсиях или доходности, то в качестве значения следует указывать число больее чем окно конверсии. 
+
+        customDateRangeShift: 0
+        // Указываем на сколько дней от сегодняшнего мы сдвигаем выборку. Нужно для того чтобы не брать те дни когда запаздывает статистика.
+        // Если хотим использовать данные о конверсиях или доходности, то в качестве значения следует указывать число равное дням в окне конверсии. 
+    };
+
+    //===========================================================
+
     var REPORTING_OPTIONS = {
         // Comment out the following line to default to the latest reporting version.
         apiVersion: 'v201705'
     };
 
-    // Указываем количество дней для выборки
-    // Если хотим использовать данные о конверсиях или доходности, то в качестве значения следует указывать число больее чем окно конверсии. 
-    var customDaysInDateRange = 365;
-
-    // Указываем на сколько дней от сегодняшнего мы сдвигаем выборку. Нужно для того чтобы не брать те дни когда запаздывает статистика.
-    // Если хотим использовать данные о конверсиях или доходности, то в качестве значения следует указывать число равное дням в окне конверсии. 
-    var customDateRangeShift = 0;
-
     var campaignPerfomaceAWQL = 'SELECT CampaignName, CampaignId ' +
         'FROM CAMPAIGN_PERFORMANCE_REPORT ' +
         'WHERE CampaignStatus = ENABLED AND AdvertisingChannelType = SEARCH AND Clicks > 100 ' +
-         'DURING ' + customDateRange();
+        'DURING ' + customDateRange();
     var campaignPerfomaceRowsIter = AdWordsApp.report(campaignPerfomaceAWQL, REPORTING_OPTIONS).rows();
     while (campaignPerfomaceRowsIter.hasNext()) {
-        var CampaignRow = campaignPerfomaceRowsIter.next();
-        var CampaignName = CampaignRow['CampaignName'];
-        var CampaignId = CampaignRow['CampaignId'];
+        var CampaignRow = campaignPerfomaceRowsIter.next(),
+            CampaignName = CampaignRow['CampaignName'],
+            CampaignId = CampaignRow['CampaignId'];
         if (CampaignRow) {
             getAdGroups();
         }
@@ -34,9 +38,9 @@ function main() {
             'DURING ' + customDateRange();
         var AdGroupPerfomancerowsIter = AdWordsApp.report(AdGroupPerfomanceAWQL, REPORTING_OPTIONS).rows();
         while (AdGroupPerfomancerowsIter.hasNext()) {
-            var AdGroupRow = AdGroupPerfomancerowsIter.next();
-            var AdGroupName = AdGroupRow['AdGroupName'];
-            var AdGroupId = AdGroupRow['AdGroupId'];
+            var AdGroupRow = AdGroupPerfomancerowsIter.next(),
+                AdGroupName = AdGroupRow['AdGroupName'],
+                AdGroupId = AdGroupRow['AdGroupId'];
             if (AdGroupRow) {
                 Logger.log('CampaignName: ' + CampaignName + ' AdGroupName: ' + AdGroupName);
                 var statsForAdsInGroup = getAds();
@@ -52,18 +56,16 @@ function main() {
                 'DURING ' + customDateRange();
             var adsRowsIter = AdWordsApp.report(adsAWQL, REPORTING_OPTIONS).rows();
             while (adsRowsIter.hasNext()) {
-                var adsRow = adsRowsIter.next();
-                var adsId = adsRow['Id'].toString();
-                var adsStatus = adsRow['Status'].toString();
-                var adsClicks = parseFloat(adsRow['Clicks']).toFixed();
-                var adsConversions = parseFloat(adsRow['Conversions']).toFixed(2);
-                var adsCost = parseFloat(adsRow['Cost']).toFixed(2);
-                adsCost = adsCost * 1000000;
+                var adsRow = adsRowsIter.next(),
+                    adsId = adsRow['Id'].toString(),
+                    adsStatus = adsRow['Status'].toString(),
+                    adsClicks = parseFloat(adsRow['Clicks']).toFixed(),
+                    adsConversions = parseFloat(adsRow['Conversions']).toFixed(2),
+                    adsCost = parseFloat(adsRow['Cost']).toFixed(2) * 1000000;
                 var adsCostPerConversion = +0;
                 if (adsConversions > 0) {
-                    adsCostPerConversion = adsCost / adsConversions;
+                    adsCostPerConversion = parseFloat(adsCost / adsConversions).toFixed(2);
                 }
-                adsCostPerConversion = parseFloat(adsCostPerConversion).toFixed(2);
                 if (adsRow) {
                     var statsRow = {
                         IdCol: adsId,
@@ -84,27 +86,25 @@ function main() {
         }
 
         function shuffle(array) {
-            var stats = array;
-            var clicksStat = [];
-            var conversionCostStat = [];
-            var lowestClicks = +0;
-            var bestConversionCost = +0;
-
+            var stats = array,
+                clicksStat = [],
+                conversionCostStat = [],
+                lowestClicks = +0,
+                bestConversionCost = +0;
             for (var i = 0; i < stats.length; i++) {
-                var statsRow = stats[i];
-                var clicks = statsRow['ClicksCol'];
-                var conversionCost = statsRow['CostPerConversionCol'];
+                var statsRow = stats[i],
+                    clicks = statsRow['ClicksCol'],
+                    conversionCost = statsRow['CostPerConversionCol'];
                 clicksStat[clicksStat.length] = clicks;
                 conversionCostStat[conversionCostStat.length] = conversionCost;
             }
-
             lowestClicks = getMinOfArray(clicksStat);
             bestConversionCost = getMinOfArray(conversionCostStat);
 
             if (lowestClicks < 100) {
                 for (var i = 0; i < stats.length; i++) {
-                    var statsRow = stats[i];
-                    var clicks = statsRow['ClicksCol'];
+                    var statsRow = stats[i],
+                        clicks = statsRow['ClicksCol'];
                     if (clicks == lowestClicks) {
                         toggleAdsInAdGroup(statsRow['IdCol'], 'enable');
                         Logger.log('Включаем объявление: ' + statsRow['IdCol']);
@@ -113,8 +113,8 @@ function main() {
             }
             if (lowestClicks > 100) {
                 for (var i = 0; i < stats.length; i++) {
-                    var statsRow = stats[i];
-                    var conversionCost = statsRow['CostPerConversionCol'];
+                    var statsRow = stats[i],
+                        conversionCost = statsRow['CostPerConversionCol'];
                     if (conversionCost == bestConversionCost) {
                         toggleAdsInAdGroup(statsRow['IdCol'], 'enable');
                         Logger.log('Включаем лучшее объявление: ' + statsRow['IdCol']);
@@ -128,8 +128,8 @@ function main() {
                 .withCondition('AdGroupId = ' + AdGroupId)
                 .get();
             if (adGroupIterator.hasNext()) {
-                var adGroup = adGroupIterator.next();
-                var adsIterator = adGroup.ads()
+                var adGroup = adGroupIterator.next(),
+                    adsIterator = adGroup.ads()
                     .withCondition('Id = ' + adId)
                     .get();
                 while (adsIterator.hasNext()) {
@@ -149,27 +149,17 @@ function main() {
         return Math.min.apply(null, numArray);
     }
 
-    function customDateRange(select) { // Формируем значение параметра временного диапазона для выборки AWQL
-        var timeType = select;
-        var MILLIS_PER_DAY = 1000 * 60 * 60 * 24;
-        var now = new Date();
-        var fromDate = new Date(now.getTime() - (customDaysInDateRange + customDateRangeShift) * MILLIS_PER_DAY);
-        var toDate = new Date(now.getTime() - customDateRangeShift * MILLIS_PER_DAY);
-        var nowDate = new Date(now.getTime());
-        var timeZone = AdWordsApp.currentAccount().getTimeZone();
-        var fromformatDate = Utilities.formatDate(fromDate, timeZone, 'yyyyMMdd');
-        var toformatDate = Utilities.formatDate(toDate, timeZone, 'yyyyMMdd');
-        var nowformatDate = Utilities.formatDate(nowDate, timeZone, 'yyyyMMdd');
-        var duringDates = fromformatDate + ',' + toformatDate;
-
-        if (timeType == 'from') {
-            return fromformatDate;
-        } else if (timeType == 'to') {
-            return toformatDate;
-        } else if (timeType == 'now') {
-            return nowformatDate;
-        } else {
-            return duringDates;
-        }
+    function customDateRange() { // Формируем значение параметра временного диапазона для выборки AWQL
+        var MILLIS_PER_DAY = 1000 * 60 * 60 * 24,
+            now = new Date(),
+            fromDate = new Date(now.getTime() - (CONFIG.customDaysInDateRange + CONFIG.customDateRangeShift) * MILLIS_PER_DAY),
+            toDate = new Date(now.getTime() - CONFIG.customDateRangeShift * MILLIS_PER_DAY),
+            nowDate = new Date(now.getTime()),
+            timeZone = AdWordsApp.currentAccount().getTimeZone(),
+            fromformatDate = Utilities.formatDate(fromDate, timeZone, 'yyyyMMdd'),
+            toformatDate = Utilities.formatDate(toDate, timeZone, 'yyyyMMdd'),
+            nowformatDate = Utilities.formatDate(nowDate, timeZone, 'yyyyMMdd'),
+            duringDates = fromformatDate + ',' + toformatDate;
+        return duringDates;
     }
 }

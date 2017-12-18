@@ -1,21 +1,18 @@
 function main() {
 
-    var ARPU = 9; // APRU на пользователя
-    var AverageCheck = 180; // Средний чек на пользователя
+    var CONFIG = {
+        ARPU: 9,
+        // APRU на пользователя
 
-    ARPU = +(ARPU / 3).toFixed(2);
-    AverageCheck = +(AverageCheck / 3).toFixed(2);
+        AverageCheck: 180,
+        // Средний чек на пользователя
 
-    var minPosition = 2; // Минимально удерживаемая позиция
+        minPosition: 2,
+        // Минимально удерживаемая позиция
+    };
 
-    var MILLIS_PER_DAY = 1000 * 60 * 60 * 24;
-    var now = new Date();
-    var nowDate = new Date(now.getTime());
-    var timeZone = AdWordsApp.currentAccount().getTimeZone();
-    var nowDateFormatted = Utilities.formatDate(nowDate, timeZone, 'HH');
-    if (nowDateFormatted < 2) {
-        nowDateFormatted = 2;
-    }
+    ARPU = (CONFIG.ARPU/3).toFixed(2);
+    AverageCheck = (CONFIG.AverageCheck/3).toFixed(2);
 
     var campaignPerfomaceAWQL = 'SELECT CampaignName, CampaignId ' +
         'FROM CAMPAIGN_PERFORMANCE_REPORT ' +
@@ -24,9 +21,9 @@ function main() {
         'DURING TODAY';
     var campaignPerfomaceRowsIter = AdWordsApp.report(campaignPerfomaceAWQL).rows();
     while (campaignPerfomaceRowsIter.hasNext()) {
-        var CampaignRow = campaignPerfomaceRowsIter.next();
-        var CampaignName = CampaignRow['CampaignName'];
-        var CampaignId = CampaignRow['CampaignId'];
+        var CampaignRow = campaignPerfomaceRowsIter.next(),
+            CampaignName = CampaignRow['CampaignName'],
+            CampaignId = CampaignRow['CampaignId'];
         if (CampaignRow) {
             getAdGroups();
         }
@@ -37,14 +34,11 @@ function main() {
             'FROM ADGROUP_PERFORMANCE_REPORT ' +
             'WHERE CampaignId = ' + CampaignId + ' AND AdGroupStatus = ENABLED  ' +
             'DURING TODAY';
-
         var adGroupPerfomanceRowsIter = AdWordsApp.report(adGroupPerfomanceAWQL).rows();
-
         while (adGroupPerfomanceRowsIter.hasNext()) {
-            var AdGroupRow = adGroupPerfomanceRowsIter.next();
-            var AdGroupName = AdGroupRow['AdGroupName'];
-            var AdGroupId = AdGroupRow['AdGroupId'];
-
+            var AdGroupRow = adGroupPerfomanceRowsIter.next(),
+                AdGroupName = AdGroupRow['AdGroupName'],
+                AdGroupId = AdGroupRow['AdGroupId'];
             if (AdGroupRow != undefined) {
                 Logger.log('Campaign: ' + CampaignName + ', Ad Group: ' + AdGroupName);
                 lowPosition();
@@ -57,16 +51,16 @@ function main() {
             var keywordIterator = AdWordsApp.keywords()
                 .withCondition('CampaignId = ' + CampaignId)
                 .withCondition('AdGroupId = ' + AdGroupId)
-                .withCondition('AveragePosition > ' + minPosition)
+                .withCondition('AveragePosition > ' + CONFIG.minPosition)
                 .withCondition('Impressions > ' + nowDateFormatted)
                 .withCondition('Status = ENABLED')
                 .forDateRange('TODAY')
                 .get();
             if (keywordIterator.hasNext()) {
                 while (keywordIterator.hasNext()) {
-                    var keyword = keywordIterator.next();
-                    var keyStrategy = keyword.bidding().getStrategyType().toString();
-                    var keywordCpc = parseFloat(keyword.bidding().getCpc()).toFixed(2);
+                    var keyword = keywordIterator.next(),
+                        keyStrategy = keyword.bidding().getStrategyType().toString(),
+                        keywordCpc = parseFloat(keyword.bidding().getCpc()).toFixed(2);
                     if (keyStrategy == 'MANUAL_CPC') {
                         keyword.bidding().setCpc(bidCpc(keywordCpc));
                         Logger.log('Повышаем позицию');
@@ -84,10 +78,10 @@ function main() {
                 .get();
             if (keywordIterator.hasNext()) {
                 while (keywordIterator.hasNext()) {
-                    var keyword = keywordIterator.next();
-                    var keyStrategy = keyword.bidding().getStrategyType().toString();
-                    var keywordFirstPageCpc = parseFloat(keyword.getFirstPageCpc()).toFixed(2);
-                    var keywordCpc = parseFloat(keyword.bidding().getCpc()).toFixed(2);
+                    var keyword = keywordIterator.next(),
+                        keyStrategy = keyword.bidding().getStrategyType().toString(),
+                        keywordFirstPageCpc = parseFloat(keyword.getFirstPageCpc()).toFixed(2),
+                        keywordCpc = parseFloat(keyword.bidding().getCpc()).toFixed(2);
                     if (keyStrategy == 'MANUAL_CPC') {
                         if (keywordFirstPageCpc > keywordCpc) {
                             keyword.bidding().setCpc(bidCpc(keywordCpc));

@@ -97,8 +97,9 @@ function main() {
                 AdGroupId = adGroupRow['AdGroupId'];
             if (adGroupRow != undefined) {
                 Logger.log('Campaign: ' + CampaignName + ', Ad Group: ' + AdGroupName);
+                var Ads = getExpandedTextAdsInAdGroup();
                 var keysForNewGroups = getQueries();
-                addingKeywords(keysForNewGroups);
+                addingKeywords(keysForNewGroups, Ads);
                 Logger.log('-----------------------------------------------------------------------------------------');
             }
         }
@@ -172,9 +173,35 @@ function main() {
                 adGroup.createNegativeKeyword(key);
             }
         }
+
+        function getExpandedTextAdsInAdGroup() {
+            var report = [];
+            var adGroupIterator = AdWordsApp.adGroups()
+                .withCondition('Name = "' + AdGroupName + '"')
+                .get();
+            if (adGroupIterator.hasNext()) {
+                var adGroup = adGroupIterator.next();
+                var adsIterator = adGroup.ads()
+                    .withCondition('Type=EXPANDED_TEXT_AD')
+                    .get();
+                while (adsIterator.hasNext()) {
+                    var ad = adsIterator.next().asType().expandedTextAd();
+                    var newAd = {
+                        HeadlinePart1: ad.getHeadlinePart1(),
+                        HeadlinePart2: ad.getHeadlinePart2(),
+                        Description: ad.getDescription(),
+                        Path1: ad.getPath1(),
+                        Path2: ad.getPath2(),
+                        FinalUrl: ad.getFinalUrl()
+                    };
+                    report.push(newAd);
+                }
+            }
+            return report;
+        }
     }
 
-    function addingKeywords(keywordsArray) {
+    function addingKeywords(keywordsArray, adsArray) {
         var newKeywordsArray = keywordsArray;
         newKeywordsArray.forEach(function (newKeyword) {
             function getAdGroupByName() {
@@ -187,28 +214,75 @@ function main() {
                         .get();
                     if (campaignIterator.hasNext()) {
                         var campaign = campaignIterator.next();
-                        var NewAdGroup = campaign.newAdGroupBuilder()
-                            .withName(newKeyword)
-                            .build()
-                            .getResult();
-                        var newKeys = [];
-                        newKeys[newKeys.length] = '+' + newKeyword.replace(/ /g, ' +');
-                        newKeys[newKeys.length] = '"' + newKeyword + '"';
-                        newKeys[newKeys.length] = '[' + newKeyword + ']';
-                        newKeys.forEach(function (key) {
-                            var keywordOperation = NewAdGroup.newKeywordBuilder()
-                                .withText(key.toString())
-                                .build();
-                            if (keywordOperation.isSuccessful()) { // Получение результатов.
-                                var keyword = keywordOperation.getResult();
-                                keyword.pause();
-                                keyword.applyLabel(customDateRange('now').toString());
-                                keyword.applyLabel(CONFIG.scriptLabel);
-                                Logger.log('Добавляем: ' + key);
-                            } else {
-                                var errors = keywordOperation.getErrors(); // Исправление ошибок.
+                        var AdGroupOperation = campaign.newAdGroupBuilder()
+                            .withName(newKeyword.toString())
+                            .build();
+                        if (AdGroupOperation.isSuccessful()) { // Получение результатов.
+                            var adGroup = AdGroupOperation.getResult();
+                            var newKeys = [];
+                            newKeys[newKeys.length] = '+' + newKeyword.toString().replace(/ /g, ' +');
+                            newKeys[newKeys.length] = '"' + newKeyword.toString() + '"';
+                            newKeys[newKeys.length] = '[' + newKeyword.toString() + ']';
+                            newKeys.forEach(function (key) {
+                                var keywordOperation = adGroup.newKeywordBuilder()
+                                    .withText(key.toString())
+                                    .build();
+                                if (keywordOperation.isSuccessful()) { // Получение результатов.
+                                    var keyword = keywordOperation.getResult();
+                                    keyword.pause();
+                                    keyword.applyLabel(customDateRange('now').toString());
+                                    keyword.applyLabel(CONFIG.scriptLabel);
+                                    Logger.log('Добавляем: ' + key);
+                                } else {
+                                    var errors = keywordOperation.getErrors(); // Исправление ошибок.
+                                }
+                            });
+                            if (adsArray.length < 10) {
+                                var capitalizeKey = newKeyword.toLowerCase().replace(/\b[a-z]/g, function (letter) {
+                                    return letter.toUpperCase();
+                                });
+                                if (capitalizeKey.length < 30) {
+                                    var temp = [];
+                                    adsArray.forEach(function (ad) {
+                                        var newAdWithKey = {
+                                            HeadlinePart1: capitalizeKey,
+                                            HeadlinePart2: ad.getHeadlinePart2(),
+                                            Description: ad.getDescription(),
+                                            Path1: ad.getPath1(),
+                                            Path2: ad.getPath2(),
+                                            FinalUrl: ad.getFinalUrl()
+                                        }
+                                        temp.push(newAd);
+                                        var newAdWithMask = {
+                                            HeadlinePart1: '{KeyWord:' + capitalizeKey + '}',
+                                            HeadlinePart2: ad.getHeadlinePart2(),
+                                            Description: ad.getDescription(),
+                                            Path1: ad.getPath1(),
+                                            Path2: ad.getPath2(),
+                                            FinalUrl: ad.getFinalUrl()
+                                        }
+                                        temp.push(newAdWithMask);
+                                    });
+                                    temp = unique(temp);
+                                    temp.forEach(function(ad) {
+                                        adsArray.push(ad);
+                                    })
+                                }
                             }
-                        });
+                            adsArray.forEach(function (ad) {
+                                adGroup.newAd().expandedTextAdBuilder()
+                                    .withHeadlinePart1(ad.HeadlinePart1)
+                                    .withHeadlinePart2(ad.HeadlinePart2)
+                                    .withDescription(ad.Description)
+                                    .withPath1(ad.Path1)
+                                    .withPath2(ad.Path2)
+                                    .withFinalUrl(ad.FinalUrl)
+                                    .build();
+                            });
+
+                        } else {
+                            var errors = AdGroupOperation.getErrors(); // Исправление ошибок.
+                        }
                     }
                 }
             }

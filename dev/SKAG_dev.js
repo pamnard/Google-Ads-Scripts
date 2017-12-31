@@ -325,7 +325,6 @@ function main() {
         } else {
             return duringDates;
         }
-        return duringDates;
     }
 
     function unique(arr) { // убираем повторы

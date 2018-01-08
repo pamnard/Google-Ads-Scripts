@@ -15,7 +15,7 @@ function main() {
         // Если хотим использовать данные о конверсиях или доходности, то в качестве значения 
         // следует указывать число равное дням в окне конверсии. 
 
-        viewsTreshold: 3
+        ImpressionsTreshold: 3
         // Минимальный порог по поисковым запросам для создания из них ключевых слов
     }
 
@@ -23,7 +23,7 @@ function main() {
 
     var REPORTING_OPTIONS = {
         // Comment out the following line to default to the latest reporting version.
-        apiVersion: 'v201705'
+        apiVersion: 'v201708'
     };
 
     ensureAccountLabels(); // Проверяем и создаем ярлыки
@@ -37,7 +37,7 @@ function main() {
         'FROM CAMPAIGN_PERFORMANCE_REPORT ' +
         'WHERE AdvertisingChannelType = SEARCH ' +
         'AND Labels CONTAINS_ANY [' + label.getId() + '] ' +
-        'AND Views >= ' + CONFIG.viewsTreshold + ' ' +
+        'AND Impressions >= ' + CONFIG.ImpressionsTreshold + ' ' +
         'DURING TODAY';
     var campaignPerfomaceRowsIter = AdWordsApp.report(campaignPerfomaceAWQL, REPORTING_OPTIONS).rows();
     while (campaignPerfomaceRowsIter.hasNext()) {
@@ -45,6 +45,7 @@ function main() {
             CampaignName = CampaignRow['CampaignName'],
             CampaignId = CampaignRow['CampaignId'];
         if (CampaignRow) {
+            Logger.log(CampaignName);
             var negativesListFromCampaign = getCampaignNegatives(); // Минус-слова кампании
             adGroupReport(); // Создаем ключи
         }
@@ -88,7 +89,7 @@ function main() {
             'FROM ADGROUP_PERFORMANCE_REPORT ' +
             'WHERE CampaignId = ' + CampaignId + ' ' +
             'AND Labels CONTAINS_ANY [' + label.getId() + '] ' +
-            'AND Views >= ' + CONFIG.viewsTreshold + ' ' +
+            'AND Impressions >= ' + CONFIG.ImpressionsTreshold + ' ' +
             'DURING TODAY';
         var adGroupPerfomanceRowsIter = AdWordsApp.report(adGroupPerfomanceAWQL, REPORTING_OPTIONS).rows();
         while (adGroupPerfomanceRowsIter.hasNext()) {
@@ -110,9 +111,9 @@ function main() {
             var QueryPerfomanceAWQL = 'SELECT Query, KeywordId, KeywordTextMatchingQuery ' +
                 'FROM SEARCH_QUERY_PERFORMANCE_REPORT ' +
                 'WHERE CampaignId = ' + CampaignId + ' ' +
-                'AND Views >= ' + CONFIG.viewsTreshold + ' ' +
+                'AND Impressions >= ' + CONFIG.ImpressionsTreshold + ' ' +
                 'AND QueryTargetingStatus != EXCLUDED AND QueryTargetingStatus != BOTH '
-            'DURING TODAY';
+                'DURING TODAY';
             var QueryPerfomanceRowsIter = AdWordsApp.report(QueryPerfomanceAWQL, REPORTING_OPTIONS).rows();
             while (QueryPerfomanceRowsIter.hasNext()) {
                 var QueryRow = QueryPerfomanceRowsIter.next(),
@@ -121,9 +122,14 @@ function main() {
                     KeywordTextMatchingQuery = QueryRow['KeywordTextMatchingQuery'].toString().toLowerCase(),
                     NewKeyword = Query.replace(/[;#\(\)\&=\+:\-\/\.]+/g, ' ').trim();
                 if (QueryRow) {
-                    if (AdGroupName.indexOf(NewKeyword) != -1) {
+                    if (NewKeyword.indexOf(AdGroupName) != -1) {
                         var queryWords = Query.replace(/[;#\(\)\&=\+:\-\/\.]+/g, ' ').trim().split(' ');
                         var keywordWords = KeywordTextMatchingQuery.replace(/[;#\(\)\&=\+:\-\/\.]+/g, ' ').trim().split(' ');
+                        Array.prototype.diff = function (a) {
+                            return this.filter(function (i) {
+                                return !(a.indexOf(i) > -1);
+                            });
+                        };
                         var diffWords = queryWords.diff(keywordWords);
                         if (diffWords.length > +0) {
                             var reason = true;
@@ -143,6 +149,7 @@ function main() {
                     }
                 }
             }
+            return report;
         }
 
         function getNegativeKeywordForAdGroup() {
@@ -192,7 +199,7 @@ function main() {
                         Description: ad.getDescription(),
                         Path1: ad.getPath1(),
                         Path2: ad.getPath2(),
-                        FinalUrl: ad.getFinalUrl()
+                        FinalUrl: ad.urls().getFinalUrl()
                     };
                     report.push(newAd);
                 }
@@ -243,14 +250,18 @@ function main() {
                                 });
                                 if (capitalizeKey.length < 30) {
                                     var temp = [];
+                                    var path2 = ad.getPath2();
+                                    if (capitalizeKey.length < 16) {
+                                        path2 = capitalizeKey;
+                                    }
                                     adsArray.forEach(function (ad) {
                                         var newAdWithKey = {
                                             HeadlinePart1: capitalizeKey,
                                             HeadlinePart2: ad.getHeadlinePart2(),
                                             Description: ad.getDescription(),
                                             Path1: ad.getPath1(),
-                                            Path2: ad.getPath2(),
-                                            FinalUrl: ad.getFinalUrl()
+                                            Path2: path2,
+                                            FinalUrl: ad.urls().getFinalUrl()
                                         }
                                         temp.push(newAd);
                                         var newAdWithMask = {
@@ -258,13 +269,24 @@ function main() {
                                             HeadlinePart2: ad.getHeadlinePart2(),
                                             Description: ad.getDescription(),
                                             Path1: ad.getPath1(),
-                                            Path2: ad.getPath2(),
-                                            FinalUrl: ad.getFinalUrl()
+                                            Path2: path2,
+                                            FinalUrl: ad.urls().getFinalUrl()
                                         }
                                         temp.push(newAdWithMask);
+                                        if (capitalizeKey.length < 24) {
+                                            var newAdWithMaskAndBrand = {
+                                                HeadlinePart1: 'FBS - {KeyWord:' + capitalizeKey + '}',
+                                                HeadlinePart2: ad.getHeadlinePart2(),
+                                                Description: ad.getDescription(),
+                                                Path1: ad.getPath1(),
+                                                Path2: path2,
+                                                FinalUrl: ad.urls().getFinalUrl()
+                                            }
+                                            temp.push(newAdWithMaskAndBrand);
+                                        }
                                     });
                                     temp = unique(temp);
-                                    temp.forEach(function(ad) {
+                                    temp.forEach(function (ad) {
                                         adsArray.push(ad);
                                     })
                                 }
@@ -279,7 +301,6 @@ function main() {
                                     .withFinalUrl(ad.FinalUrl)
                                     .build();
                             });
-
                         } else {
                             var errors = AdGroupOperation.getErrors(); // Исправление ошибок.
                         }
@@ -299,8 +320,8 @@ function main() {
             return labelNames;
         }
         var labelNames = getAccountLabelNames();
-        if (labelNames.indexOf(scriptLabel) == -1) {
-            AdWordsApp.createLabel(scriptLabel);
+        if (labelNames.indexOf(CONFIG.scriptLabel) == -1) {
+            AdWordsApp.createLabel(CONFIG.scriptLabel);
         }
         if (labelNames.indexOf(customDateRange('now')) == -1) {
             AdWordsApp.createLabel(customDateRange('now'));
@@ -325,6 +346,7 @@ function main() {
         } else {
             return duringDates;
         }
+        return duringDates;
     }
 
     function unique(arr) { // убираем повторы
@@ -333,10 +355,4 @@ function main() {
             return a in tmp ? 0 : tmp[a] = 1;
         });
     }
-
-    Array.prototype.diff = function (a) {
-        return this.filter(function (i) {
-            return !(a.indexOf(i) > -1);
-        });
-    };
 }

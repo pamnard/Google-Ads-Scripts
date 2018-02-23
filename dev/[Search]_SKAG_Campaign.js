@@ -4,7 +4,7 @@ function main() {
         scriptLabel: 'SKAG',
         // Ярлык которым скрипт помечает созданные слова
 
-        customDaysInDateRange: 30,
+        customDaysInDateRange: 4,
         // Указываем количество дней для выборки
         // Если хотим использовать данные о конверсиях или доходности, то в качестве значения 
         // следует указывать число больее чем окно конверсии.
@@ -15,16 +15,16 @@ function main() {
         // Если хотим использовать данные о конверсиях или доходности, то в качестве значения 
         // следует указывать число равное дням в окне конверсии. 
 
-        ImpressionsTreshold: 3
+        ImpressionsTreshold: 4,
         // Минимальный порог по поисковым запросам для создания из них ключевых слов
+
+        REPORTING_OPTIONS: {
+            // Comment out the following line to default to the latest reporting version.
+            apiVersion: 'v201708'
+        }
     }
 
     // -----------------------------------
-
-    var REPORTING_OPTIONS = {
-        // Comment out the following line to default to the latest reporting version.
-        apiVersion: 'v201708'
-    };
 
     ensureAccountLabels(); // Проверяем и создаем ярлыки
 
@@ -38,8 +38,8 @@ function main() {
         'WHERE AdvertisingChannelType = SEARCH ' +
         'AND Labels CONTAINS_ANY [' + label.getId() + '] ' +
         'AND Impressions >= ' + CONFIG.ImpressionsTreshold + ' ' +
-        'DURING TODAY';
-    var campaignPerfomaceRowsIter = AdWordsApp.report(campaignPerfomaceAWQL, REPORTING_OPTIONS).rows();
+        'DURING ' + customDateRange();
+    var campaignPerfomaceRowsIter = AdWordsApp.report(campaignPerfomaceAWQL, CONFIG.REPORTING_OPTIONS).rows();
     while (campaignPerfomaceRowsIter.hasNext()) {
         var CampaignRow = campaignPerfomaceRowsIter.next(),
             CampaignName = CampaignRow['CampaignName'],
@@ -90,8 +90,8 @@ function main() {
             'WHERE CampaignId = ' + CampaignId + ' ' +
             'AND Labels CONTAINS_ANY [' + label.getId() + '] ' +
             'AND Impressions >= ' + CONFIG.ImpressionsTreshold + ' ' +
-            'DURING TODAY';
-        var adGroupPerfomanceRowsIter = AdWordsApp.report(adGroupPerfomanceAWQL, REPORTING_OPTIONS).rows();
+            'DURING ' + customDateRange();
+        var adGroupPerfomanceRowsIter = AdWordsApp.report(adGroupPerfomanceAWQL, CONFIG.REPORTING_OPTIONS).rows();
         while (adGroupPerfomanceRowsIter.hasNext()) {
             var adGroupRow = adGroupPerfomanceRowsIter.next(),
                 AdGroupName = adGroupRow['AdGroupName'],
@@ -106,25 +106,27 @@ function main() {
         }
 
         function getQueries() {
-            var allNegativeKeywordsList = getNegativeKeywordForAdGroup(); // Все минус-слова применяемые к группе
             var report = [];
-            var QueryPerfomanceAWQL = 'SELECT Query, KeywordId, KeywordTextMatchingQuery ' +
+            var allNegativeKeywordsList = getNegativeKeywordForAdGroup(); // Все минус-слова применяемые к группе
+            var keyStats = [];
+            var QueryPerfomanceAWQL = 'SELECT Query, KeywordId, KeywordTextMatchingQuery, Impressions ' +
                 'FROM SEARCH_QUERY_PERFORMANCE_REPORT ' +
-                'WHERE CampaignId = ' + CampaignId + ' ' +
-                'AND Impressions >= ' + CONFIG.ImpressionsTreshold + ' ' +
+                'WHERE CampaignId = ' + CampaignId + ' AND AdGroupId = ' + AdGroupId + ' ' +
                 'AND QueryTargetingStatus != EXCLUDED AND QueryTargetingStatus != BOTH '
-                'DURING TODAY';
-            var QueryPerfomanceRowsIter = AdWordsApp.report(QueryPerfomanceAWQL, REPORTING_OPTIONS).rows();
+            'DURING ' + customDateRange();
+            var QueryPerfomanceRowsIter = AdWordsApp.report(QueryPerfomanceAWQL, CONFIG.REPORTING_OPTIONS).rows();
             while (QueryPerfomanceRowsIter.hasNext()) {
                 var QueryRow = QueryPerfomanceRowsIter.next(),
                     Query = QueryRow['Query'].toString().toLowerCase(),
                     KeywordId = QueryRow['KeywordId'],
-                    KeywordTextMatchingQuery = QueryRow['KeywordTextMatchingQuery'].toString().toLowerCase(),
-                    NewKeyword = Query.replace(/[;#\(\)\&=\+:\-\/\.]+/g, ' ').trim();
+                    KeywordTextMatchingQuery = QueryRow['KeywordTextMatchingQuery'].toString().toLowerCase().replace(/["\[\]\+]+/g, ''),
+                    Impressions = parseFloat(QueryRow['Impressions']).toFixed(),
+                    NewKeyword = Query.replace(/[";#\(\)\&=\+:\-\/\.\*]+/g, ' ').trim();
+                // Logger.log('KeywordTextMatchingQuery = ' + KeywordTextMatchingQuery + ', Query = ' + Query + ', Impressions - ' + Impressions);
                 if (QueryRow) {
                     if (NewKeyword.indexOf(AdGroupName) != -1) {
-                        var queryWords = Query.replace(/[;#\(\)\&=\+:\-\/\.]+/g, ' ').trim().split(' ');
-                        var keywordWords = KeywordTextMatchingQuery.replace(/[;#\(\)\&=\+:\-\/\.]+/g, ' ').trim().split(' ');
+                        var queryWords = Query.replace(/[";#\(\)\&=\+:\-\/\.\*]+/g, ' ').trim().split(' ');
+                        var keywordWords = KeywordTextMatchingQuery.replace(/[";#\(\)\&=\+:\-\/\.\*]+/g, ' ').trim().split(' ');
                         Array.prototype.diff = function (a) {
                             return this.filter(function (i) {
                                 return !(a.indexOf(i) > -1);
@@ -132,16 +134,57 @@ function main() {
                         };
                         var diffWords = queryWords.diff(keywordWords);
                         if (diffWords.length > +0) {
-                            var reason = true;
-                            diffWords.forEach(function (word) {
-                                allNegativeKeywordsList.forEach(function (negativeword) {
-                                    if (word == negativeword) {
-                                        reason = false;
+                            if (Impressions >= CONFIG.ImpressionsTreshold) {
+                                // Logger.log(diffWords.toString());
+                                if (diffWords.length == +1) {
+                                    var word = diffWords.toString();
+                                    var reason = true;
+                                    allNegativeKeywordsList.forEach(function (negativeword) {
+                                        if (word == negativeword) {
+                                            reason = false;
+                                        }
+                                    });
+                                    if (reason != false) {
+                                        report.push(AdGroupName + ' ' + word);
+                                        report.push(word + ' ' + AdGroupName);
+                                        // Logger.log(NewKeyword);
+                                        addNegativeKeywordToAdGroup(word);
+                                        addNegativeKeywordToAdGroup('[' + AdGroupName + ' ' + word + ']');
+                                        addNegativeKeywordToAdGroup('[' + word + ' ' + AdGroupName + ']');
+                                    }
+                                } else {
+                                    // var word = diffWords.toString().replace(/,/g, ' ').trim();
+                                    report.push(NewKeyword);
+                                    addNegativeKeywordToAdGroup('"' + NewKeyword + '"');
+                                }
+                            }
+                            if (keyStats.length == +0) {
+                                diffWords.forEach(function (word) {
+                                    var line = {
+                                        key: word,
+                                        stats: Impressions
+                                    }
+                                    keyStats.push(line);
+                                });
+                            } else {
+                                diffWords.forEach(function (word) {
+                                    var isInclude = false;
+                                    keyStats.forEach(function (line) {
+                                        // Logger.log(line.key + ' - ' + line.stats);
+                                        if (line.key == word) {
+                                            isInclude = true;
+                                            line.stats = +line.stats + +Impressions;
+                                        }
+                                    });
+                                    if (isInclude != true) {
+                                        var line = {
+                                            key: word,
+                                            stats: Impressions
+                                        }
+                                        keyStats.push(line);
                                     }
                                 });
-                            });
-                            if (reason == true) {
-                                report.push(NewKeyword);
+
                             }
                         }
                     } else {
@@ -149,6 +192,16 @@ function main() {
                     }
                 }
             }
+            keyStats.forEach(function (line) {
+                if (line.stats >= CONFIG.ImpressionsTreshold) {
+                    report.push(AdGroupName + ' ' + line.key);
+                    report.push(line.key + ' ' + AdGroupName);
+                    addNegativeKeywordToAdGroup(line.key);
+                    addNegativeKeywordToAdGroup('[' + AdGroupName + ' ' + line.key + ']');
+                    addNegativeKeywordToAdGroup('[' + line.key + ' ' + AdGroupName + ']');
+                }
+            });
+            report = unique(report).sort();
             return report;
         }
 
@@ -192,30 +245,36 @@ function main() {
                     .withCondition('Type=EXPANDED_TEXT_AD')
                     .get();
                 while (adsIterator.hasNext()) {
-                    var ad = adsIterator.next().asType().expandedTextAd();
+                    var ad = adsIterator.next().asType().expandedTextAd(),
+                        headlinePart1 = ad.getHeadlinePart1(),
+                        headlinePart2 = ad.getHeadlinePart2(),
+                        description = ad.getDescription(),
+                        path1 = ad.getPath1(),
+                        path2 = ad.getPath2(),
+                        finalUrl = ad.urls().getFinalUrl();
                     var newAd = {
-                        HeadlinePart1: ad.getHeadlinePart1(),
-                        HeadlinePart2: ad.getHeadlinePart2(),
-                        Description: ad.getDescription(),
-                        Path1: ad.getPath1(),
-                        Path2: ad.getPath2(),
-                        FinalUrl: ad.urls().getFinalUrl()
+                        HeadlinePart1: headlinePart1,
+                        HeadlinePart2: headlinePart2,
+                        Description: description,
+                        Path1: path1,
+                        Path2: path2,
+                        FinalUrl: finalUrl
                     };
                     report.push(newAd);
                 }
             }
             return report;
         }
-    }
 
-    function addingKeywords(keywordsArray, adsArray) {
-        var newKeywordsArray = keywordsArray;
-        newKeywordsArray.forEach(function (newKeyword) {
-            function getAdGroupByName() {
+        function addingKeywords(keywordsArray, adsArray) {
+            var newKeywordsArray = keywordsArray;
+            newKeywordsArray.forEach(function (newKeyword) {
                 var adGroupIterator = AdWordsApp.adGroups()
+                    .withCondition('CampaignName = "' + CampaignName + '"')
                     .withCondition('Name = "' + newKeyword + '"')
                     .get();
                 if (adGroupIterator.totalNumEntities() == +0) {
+                    Logger.log(newKeyword);
                     var campaignIterator = AdWordsApp.campaigns()
                         .withCondition('Name = "' + CampaignName + '"')
                         .get();
@@ -226,6 +285,8 @@ function main() {
                             .build();
                         if (AdGroupOperation.isSuccessful()) { // Получение результатов.
                             var adGroup = AdGroupOperation.getResult();
+                            Logger.log('Создана группа - ' + adGroup.getName());
+                            adGroup.applyLabel(CONFIG.scriptLabel);
                             var newKeys = [];
                             newKeys[newKeys.length] = '+' + newKeyword.toString().replace(/ /g, ' +');
                             newKeys[newKeys.length] = '"' + newKeyword.toString() + '"';
@@ -236,67 +297,96 @@ function main() {
                                     .build();
                                 if (keywordOperation.isSuccessful()) { // Получение результатов.
                                     var keyword = keywordOperation.getResult();
-                                    keyword.pause();
+                                    Logger.log('В группу "' + adGroup.getName() + '" добавлен ключ ' + keyword.getText())
+                                    // keyword.pause();
                                     keyword.applyLabel(customDateRange('now').toString());
                                     keyword.applyLabel(CONFIG.scriptLabel);
-                                    Logger.log('Добавляем: ' + key);
                                 } else {
                                     var errors = keywordOperation.getErrors(); // Исправление ошибок.
                                 }
                             });
                             if (adsArray.length < 10) {
+                                Logger.log('Заливаем родительские объявления, ' + adsArray.length + ' шт.')
+                                adsArray.forEach(function (ad) {
+                                    adGroup.newAd().expandedTextAdBuilder()
+                                        .withHeadlinePart1(ad.HeadlinePart1)
+                                        .withHeadlinePart2(ad.HeadlinePart2)
+                                        .withDescription(ad.Description)
+                                        .withPath1(ad.Path1)
+                                        .withPath2(ad.Path2)
+                                        .withFinalUrl(ad.FinalUrl)
+                                        .build();
+                                });
                                 var capitalizeKey = newKeyword.toLowerCase().replace(/\b[a-z]/g, function (letter) {
                                     return letter.toUpperCase();
                                 });
                                 if (capitalizeKey.length < 30) {
                                     var temp = [];
-                                    var path2 = ad.getPath2();
-                                    if (capitalizeKey.length < 16) {
-                                        path2 = capitalizeKey;
-                                    }
                                     adsArray.forEach(function (ad) {
+                                        var path2 = ad.Path2;
+                                        if (capitalizeKey.length <= 15) {
+                                            path2 = capitalizeKey;
+                                        }
                                         var newAdWithKey = {
                                             HeadlinePart1: capitalizeKey,
-                                            HeadlinePart2: ad.getHeadlinePart2(),
-                                            Description: ad.getDescription(),
-                                            Path1: ad.getPath1(),
+                                            HeadlinePart2: ad.HeadlinePart2,
+                                            Description: ad.Description,
+                                            Path1: ad.Path1,
                                             Path2: path2,
-                                            FinalUrl: ad.urls().getFinalUrl()
+                                            FinalUrl: ad.FinalUrl
                                         }
-                                        temp.push(newAd);
+                                        temp.push(newAdWithKey);
                                         var newAdWithMask = {
                                             HeadlinePart1: '{KeyWord:' + capitalizeKey + '}',
-                                            HeadlinePart2: ad.getHeadlinePart2(),
-                                            Description: ad.getDescription(),
-                                            Path1: ad.getPath1(),
+                                            HeadlinePart2: ad.HeadlinePart2,
+                                            Description: ad.Description,
+                                            Path1: ad.Path1,
                                             Path2: path2,
-                                            FinalUrl: ad.urls().getFinalUrl()
+                                            FinalUrl: ad.FinalUrl
                                         }
                                         temp.push(newAdWithMask);
+                                        if (capitalizeKey.length < 25) {
+                                            var newAdWithMaskAndBrand = {
+                                                HeadlinePart1: 'FBS - {KeyWord:' + capitalizeKey + '}',
+                                                HeadlinePart2: ad.HeadlinePart2,
+                                                Description: ad.Description,
+                                                Path1: ad.Path1,
+                                                Path2: path2,
+                                                FinalUrl: ad.FinalUrl
+                                            }
+                                            temp.push(newAdWithMaskAndBrand);
+                                            var newAdWithBrand = {
+                                                HeadlinePart1: 'FBS - ' + capitalizeKey,
+                                                HeadlinePart2: ad.HeadlinePart2,
+                                                Description: ad.Description,
+                                                Path1: ad.Path1,
+                                                Path2: path2,
+                                                FinalUrl: ad.FinalUrl
+                                            }
+                                            temp.push(newAdWithBrand);
+                                        }
                                     });
-                                    temp = unique(temp);
+                                    temp = unique(temp).sort();
+                                    Logger.log('Заливаем созданные объявления, ' + temp.length + ' шт.')
                                     temp.forEach(function (ad) {
-                                        adsArray.push(ad);
-                                    })
+                                        adGroup.newAd().expandedTextAdBuilder()
+                                            .withHeadlinePart1(ad.HeadlinePart1)
+                                            .withHeadlinePart2(ad.HeadlinePart2)
+                                            .withDescription(ad.Description)
+                                            .withPath1(ad.Path1)
+                                            .withPath2(ad.Path2)
+                                            .withFinalUrl(ad.FinalUrl)
+                                            .build();
+                                    });
                                 }
                             }
-                            adsArray.forEach(function (ad) {
-                                adGroup.newAd().expandedTextAdBuilder()
-                                    .withHeadlinePart1(ad.HeadlinePart1)
-                                    .withHeadlinePart2(ad.HeadlinePart2)
-                                    .withDescription(ad.Description)
-                                    .withPath1(ad.Path1)
-                                    .withPath2(ad.Path2)
-                                    .withFinalUrl(ad.FinalUrl)
-                                    .build();
-                            });
                         } else {
                             var errors = AdGroupOperation.getErrors(); // Исправление ошибок.
                         }
                     }
                 }
-            }
-        });
+            });
+        }
     }
 
     function ensureAccountLabels() {

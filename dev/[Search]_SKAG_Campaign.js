@@ -4,7 +4,7 @@ function main() {
         scriptLabel: 'SKAG',
         // Ярлык которым скрипт помечает созданные слова
 
-        customDaysInDateRange: 4,
+        customDaysInDateRange: 5,
         // Указываем количество дней для выборки
         // Если хотим использовать данные о конверсиях или доходности, то в качестве значения 
         // следует указывать число больее чем окно конверсии.
@@ -15,7 +15,7 @@ function main() {
         // Если хотим использовать данные о конверсиях или доходности, то в качестве значения 
         // следует указывать число равное дням в окне конверсии. 
 
-        ImpressionsTreshold: 4,
+        ImpressionsTreshold: 5,
         // Минимальный порог по поисковым запросам для создания из них ключевых слов
 
         REPORTING_OPTIONS: {
@@ -271,7 +271,7 @@ function main() {
             newKeywordsArray.forEach(function (newKeyword) {
                 var adGroupIterator = AdWordsApp.adGroups()
                     .withCondition('CampaignName = "' + CampaignName + '"')
-                    .withCondition('Name = "' + newKeyword + '"')
+                    .withCondition('Name = "' + newKeyword.trim() + '"')
                     .get();
                 if (adGroupIterator.totalNumEntities() == +0) {
                     Logger.log(newKeyword);
@@ -281,19 +281,19 @@ function main() {
                     if (campaignIterator.hasNext()) {
                         var campaign = campaignIterator.next();
                         var AdGroupOperation = campaign.newAdGroupBuilder()
-                            .withName(newKeyword.toString())
+                            .withName(newKeyword.toString().trim())
                             .build();
                         if (AdGroupOperation.isSuccessful()) { // Получение результатов.
                             var adGroup = AdGroupOperation.getResult();
                             Logger.log('Создана группа - ' + adGroup.getName());
                             adGroup.applyLabel(CONFIG.scriptLabel);
                             var newKeys = [];
-                            newKeys[newKeys.length] = '+' + newKeyword.toString().replace(/ /g, ' +');
-                            newKeys[newKeys.length] = '"' + newKeyword.toString() + '"';
-                            newKeys[newKeys.length] = '[' + newKeyword.toString() + ']';
+                            newKeys[newKeys.length] = '+' + newKeyword.toString().trim().replace(/ /g, ' +');
+                            newKeys[newKeys.length] = '"' + newKeyword.toString().trim() + '"';
+                            newKeys[newKeys.length] = '[' + newKeyword.toString().trim() + ']';
                             newKeys.forEach(function (key) {
                                 var keywordOperation = adGroup.newKeywordBuilder()
-                                    .withText(key.toString())
+                                    .withText(key.toString().trim())
                                     .build();
                                 if (keywordOperation.isSuccessful()) { // Получение результатов.
                                     var keyword = keywordOperation.getResult();

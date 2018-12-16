@@ -14,7 +14,7 @@ function main() {
 
     var REPORTING_OPTIONS = {
         // Comment out the following line to default to the latest reporting version.
-        apiVersion: 'v201705'
+        apiVersion: 'V201806'
     };
 
     var campaignPerfomaceAWQL = 'SELECT CampaignName, CampaignId ' +

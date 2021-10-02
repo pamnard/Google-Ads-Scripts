@@ -1,1 +1,9 @@
-N-Gram Search Term Analysis
+# N-Gram Search Term Analysis
+
+Скрипт работает по тому же принципу что и N-Gram в !SEMTools, или группировка по составу фраз в KeyCollector
+
+[![N-Gram анализ в Excel с помощью !SEMTools - что это такое и как применять](https://img.youtube.com/vi/8nSdOilugRg/0.jpg)](https://www.youtube.com/watch?v=8nSdOilugRg "N-Gram анализ в Excel с помощью !SEMTools - что это такое и как применять")
+
+Поисковые запросы за указанный в настройках период разбиваются на фразы из 1, 2 и 3 слов, и по ним сводится статистика.
+
+Удобно для нахождения кандидатов в минус-слова, или выделения хорошо показаших себя сегментов в отдельные группы.

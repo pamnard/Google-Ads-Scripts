@@ -2,6 +2,8 @@
 
 Скрипт работает по тому же принципу что и "N-Grams" в !SEMTools, или "группировка по составу фраз" в KeyCollector
 
+Подробнее тут - https://external.software/archives/558, или вот видяшка про то как оно в SEMTools работает:
+
 [![N-Gram анализ в Excel с помощью !SEMTools - что это такое и как применять](https://img.youtube.com/vi/8nSdOilugRg/0.jpg)](https://www.youtube.com/watch?v=8nSdOilugRg "N-Gram анализ в Excel с помощью !SEMTools - что это такое и как применять")
 
 Поисковые запросы за указанный в настройках период разбиваются на фразы из 1, 2 и 3 слов, и по ним сводится статистика.

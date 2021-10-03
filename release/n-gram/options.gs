@@ -1,7 +1,7 @@
 function CONFIG() {
     return {
         sheetID: '1234567890QWERTYUIOPASDFGHJKL',
-        // ID файла в Google SpredSheets в котрый будет записываться отчёт
+        // ID файла в Google SpreadSheets в который будет записываться отчёт
 
         customDateRange: 180,
         // Указываем количество дней для выборки

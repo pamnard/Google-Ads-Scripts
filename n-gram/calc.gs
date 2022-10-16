@@ -1,10 +1,12 @@
-function calcStats(stats) {
+function calc_stats(stats) {
+    
     var report = {};
+    
     for (var level in stats) {
         if (level == 'account') {
             for (var phrase in stats[level]) {
-                if ((stats[level][phrase].clicks >= CONFIG().clickThreshold) &&
-                    (stats[level][phrase].impressions >= CONFIG().impressionThreshold)) {
+                if ((stats[level][phrase].clicks >= config().clicks_threshold) &&
+                    (stats[level][phrase].impressions >= config().impressions_threshold)) {
                     var n = stats[level][phrase].phrase.toString().split(' ').length;
                     var ctr = 0,
                         cost = 0,
@@ -53,8 +55,8 @@ function calcStats(stats) {
         if (level == 'campaign') {
             for (var campaign_id in stats[level]) {
                 for (var phrase in stats[level][campaign_id]) {
-                    if ((stats[level][campaign_id][phrase].clicks >= CONFIG().clickThreshold) &&
-                        (stats[level][campaign_id][phrase].impressions >= CONFIG().impressionThreshold)) {
+                    if ((stats[level][campaign_id][phrase].clicks >= config().clicks_threshold) &&
+                        (stats[level][campaign_id][phrase].impressions >= config().impressions_threshold)) {
                         var n = stats[level][campaign_id][phrase].phrase.toString().split(' ').length;
                         var ctr = 0,
                             cost = 0,
@@ -107,8 +109,8 @@ function calcStats(stats) {
             for (var campaign_id in stats[level]) {
                 for (var ad_group_id in stats[level][campaign_id]) {
                     for (var phrase in stats[level][campaign_id][ad_group_id]) {
-                        if ((stats[level][campaign_id][ad_group_id][phrase].clicks >= CONFIG().clickThreshold) &&
-                            (stats[level][campaign_id][ad_group_id][phrase].impressions >= CONFIG().impressionThreshold)) {
+                        if ((stats[level][campaign_id][ad_group_id][phrase].clicks >= config().clicks_threshold) &&
+                            (stats[level][campaign_id][ad_group_id][phrase].impressions >= config().impressions_threshold)) {
                             var n = stats[level][campaign_id][ad_group_id][phrase].phrase.toString().split(' ').length;
                             var ctr = 0,
                                 cost = 0,
@@ -161,6 +163,6 @@ function calcStats(stats) {
             }
         }
     }
-    Logger.log(getCurrentAccountDetails() + ' - Рассчитали финальный отчёт');
+    Logger.log(get_account_name() + ' - Рассчитали финальный отчёт');
     return report
 }

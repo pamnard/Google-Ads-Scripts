@@ -21,7 +21,7 @@ function config() {
         impressions_threshold: 100,
         // Минимальный порог показов для отчета
 
-        clicks_threshold: 100,
+        clicks_threshold: 100
         // Минимальный порог кликов для отчета
     }
 }

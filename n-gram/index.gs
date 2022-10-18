@@ -26,16 +26,16 @@ function mcc_account() {
             if (account_ids.length < 50) {
                 account_ids.push(account.getCustomerId());
             } else {
-                executeIDS(account_ids);
+                execute_ids(account_ids);
                 Utilities.sleep(1000);
                 account_ids = [];
             }
         }
     }
 
-    executeIDS(account_ids);
+    execute_ids(account_ids);
 
-    function executeIDS(ids) {
+    function execute_ids(ids) {
         var accountSelector = AdsManagerApp.accounts()
             .withIds(ids)
             .withLimit(50);

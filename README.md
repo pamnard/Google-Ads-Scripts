@@ -1,5 +1,8 @@
 # Скрипты для Google AdWords
 
+`/_lib`
++ Basic Google Ads script template
+
 `/dev/`
 + `Eval.js` - Исполняет код внешней библиотеки
 + `TelegramAPI_sample.js` - Шлёт сообщения в Telegram

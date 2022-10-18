@@ -1,4 +1,4 @@
-# Скрипты для Google AdWords
+# Google Ads Scripts
 
 `/_lib`
 + Basic Google Ads script template

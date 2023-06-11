@@ -24,20 +24,11 @@
 
 ======================================================================================== */
 
-function main() {
-    if (config().is_mcc_account) {
-        mcc_account();
-    } else {
-        account();
-        all_finished();
-    }
-}
-
 /**
  * Retrieves all child accounts of the MCC account with at least 30 conversions in the last 30 days
  * and proceeds them in parallel using the `proceedAccounts()` function.
  */
-function mcc_account() {
+function main() {
     const account_to_proceed = [];
     const accountSelector = AdsManagerApp.accounts();
     const accountIterator = accountSelector.get();

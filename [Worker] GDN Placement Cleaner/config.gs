@@ -1,8 +1,5 @@
 function config() {
     return {
-        is_mcc_account: false,
-        // true - if account is MCC
-
         // Prefix of the list where we put bad CPA placements
         blacklistName: "BadCPA",
 

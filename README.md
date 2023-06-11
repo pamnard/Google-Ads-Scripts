@@ -1,5 +1,7 @@
 # Google Ads Scripts
 
+`[Worker] GDN Placement Cleaner` - Excludes placements with bad CPA
+
 `/_lib`
 + Basic Google Ads script template
 

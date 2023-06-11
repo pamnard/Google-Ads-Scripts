@@ -10,7 +10,7 @@ function account() {
             campaigns_stats[campaign_id]
         );
         if (bad_placements.length !== 0) {
-            const list_name = `${CONFIG().blacklistName} - cid ${campaign_id}`;
+            const list_name = `${config().blacklistName} - cid ${campaign_id}`;
             makeAndPopulateExcludedPlacementList(
                 list_name,
                 bad_placements,
@@ -59,9 +59,9 @@ function getBadPlacements(campaign_id, avg_cpa) {
     const arr = [];
     const threshold = parseInt(Number(avg_cpa) * 1000000 * 5);
     const startDate = daysToGaqlDate(
-        CONFIG().customDaysInDateRange + CONFIG().customDateRangeShift
+        config().customDaysInDateRange + config().customDateRangeShift
     );
-    const endDate = daysToGaqlDate(CONFIG().customDateRangeShift);
+    const endDate = daysToGaqlDate(config().customDateRangeShift);
 
     const query = `SELECT 
             detail_placement_view.target_url, 
@@ -93,13 +93,13 @@ function getBadPlacements(campaign_id, avg_cpa) {
                 let placement_cpa = Number(cost);
                 if (conversions !== 0) {
                     placement_cpa = (Number(cost) / Number(conversions)).toFixed(2);
-                    if (+cost > +avg_cpa * +CONFIG().badRate) {
-                        if (+placement_cpa > +avg_cpa * +CONFIG().badRate) {
+                    if (+cost > +avg_cpa * +config().badRate) {
+                        if (+placement_cpa > +avg_cpa * +config().badRate) {
                             to_bad_list = true;
                         }
                     }
                 } else {
-                    if (cost > avg_cpa * +CONFIG().badRate) {
+                    if (cost > avg_cpa * +config().badRate) {
                         to_bad_list = true;
                     }
                 }
@@ -123,9 +123,9 @@ function getBadPlacements(campaign_id, avg_cpa) {
 function getCampagnsStats() {
     const report = {};
     const startDate = daysToGaqlDate(
-        CONFIG().customDaysInDateRange + CONFIG().customDateRangeShift
+        config().customDaysInDateRange + config().customDateRangeShift
     );
-    const endDate = daysToGaqlDate(CONFIG().customDateRangeShift);
+    const endDate = daysToGaqlDate(config().customDateRangeShift);
 
     const query = `SELECT 
             campaign.id, 

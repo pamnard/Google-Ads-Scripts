@@ -86,22 +86,13 @@ function getBadPlacements(campaign_id, avg_cpa) {
         if (row) {
             try {
                 let to_bad_list = false;
-                const placement =
-                    row.detailPlacementView.groupPlacementTargetUrl;
-                const placement_type = row.detailPlacementView.placementType;
-                const clicks = parseInt(row.metrics.clicks);
-                const conversions = parseFloat(row.metrics.conversions).toFixed(
-                    2
-                );
-                const cost_micros = parseFloat(row.metrics.costMicros).toFixed(
-                    2
-                );
+                const placement = row.detailPlacementView.groupPlacementTargetUrl;
+                const conversions = parseFloat(row.metrics.conversions).toFixed(2);
+                const cost_micros = parseFloat(row.metrics.costMicros).toFixed(2);
                 const cost = cost_micros / 1000000;
                 let placement_cpa = Number(cost);
                 if (conversions !== 0) {
-                    placement_cpa = (
-                        Number(cost) / Number(conversions)
-                    ).toFixed(2);
+                    placement_cpa = (Number(cost) / Number(conversions)).toFixed(2);
                     if (+cost > +avg_cpa * +CONFIG().badRate) {
                         if (+placement_cpa > +avg_cpa * +CONFIG().badRate) {
                             to_bad_list = true;
@@ -114,9 +105,7 @@ function getBadPlacements(campaign_id, avg_cpa) {
                 }
                 if (to_bad_list) {
                     arr.push(placement);
-                    Logger.log(
-                        `placement - ${placement} > placement_cpa - ${placement_cpa}`
-                    );
+                    Logger.log(`placement - ${placement} > placement_cpa - ${placement_cpa}`);
                 }
             } catch (e) {
                 Logger.log(e);
@@ -168,7 +157,6 @@ function getCampagnsStats() {
             try {
                 const campaign_id = row.campaign.id;
                 const campaign_name = row.campaign.name;
-                const clicks = parseInt(row.metrics.clicks);
                 const conversions = parseFloat(row.metrics.conversions).toFixed(2);
                 const cost_micros = parseFloat(row.metrics.costMicros).toFixed(2);
                 const cost = cost_micros / 1000000;

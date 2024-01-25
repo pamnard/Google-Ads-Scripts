@@ -1,6 +1,7 @@
 # Google Ads Scripts
 
 `[Worker] GDN Placement Cleaner` - Excludes placements with bad CPA
+`[Worker] GPT Labeler` - Keyword relevance analysis using GPT-4
 
 `/_lib`
 + Basic Google Ads script template
